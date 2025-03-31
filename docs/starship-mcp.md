@@ -19,9 +19,9 @@ starship install
 Enable Kubernetes in Docker Desktop:
 
 - From the Docker Dashboard, select the Settings.
-- Select **Kubernetes** from the left sidebar.
-- Next to **Enable Kubernetes**, select the checkbox.
-- Select **Apply & Restart** to save the settings and then click Install to confirm.
+- Select **Kubernetes** from the left sidebar.
+- Next to **Enable Kubernetes**, select the checkbox.
+- Select **Apply & Restart** to save the settings and then click Install to confirm.
 
 Connect with kubectl
 
@@ -116,35 +116,35 @@ Operating system:
 
 ## Tools (draft)
 
-`check-starship-setup`:
+`checkStarshipSetup`:
 Check existing project and identify missing setup steps, return setup info for further use.
 
-`install-dependencies`:
+`installDependencies`:
 Install all starship dependencies
 
-`setup-docker-desktop`:
+`setupDockerDesktop`:
 Setup docker desktop to enable kubernetes
 
-`connect-kubectl`:
+`connectKubectl`:
 Run `kubectl config use-context docker-desktop`
 
-`check-nodes`:
+`checkNodes`:
 Run `kubectl get nodes`
 
-`generate-config`:
+`generateConfig`:
 Generate and add `config.yaml` to the project
 
-`start-starship`:
+`startStarship`:
 Run `starship start --config config.yaml` or a npm script
 
-`check-status`:
+`checkStatus`:
 Run `kubectl get pods` or `starship get-pods`
 
-`list-endpoints`:
+`listEndpoints`:
 Display the endpoints to interact with based on the config after successful running
 
-`check-logs`:
+`checkLogs`:
 Run the logs checking command (e.g. `kubectl logs osmosis-1-genesis-0`)
 
-`stop-starship`:
+`stopStarship`:
 Run `starship stop --config config.yaml` or a npm script
