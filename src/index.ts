@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { setupStarshipTool } from "./starship/tools/setup-starship.js";
 
 // ==== Create server instance ====
 const server = new McpServer({
@@ -8,12 +9,16 @@ const server = new McpServer({
 });
 
 // ==== Register all MCP tools here ====
+server.tool(
+  "setupStarship",
+  "Setup and use Starship in a project",
+  setupStarshipTool.handler,
+);
 
 // ==== Start the server ====
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.log("Weather MCP server started on stdio");
 }
 
 main().catch((error) => {

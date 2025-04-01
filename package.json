@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && chmod 755 build/index.js",
+    "build": "tsc && npm run copy-files && chmod 755 build/index.js",
+    "copy-files": "cp -r src/starship/tools/texts build/starship/tools/",
     "clean": "rimraf build"
   },
   "keywords": [],
@@ -22,14 +22,9 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
-  "files": [
-    "build"
-  ],
+  "files": ["build"],
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "esbuild"
-    ]
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
   },
   "dependencies": {
     "@mistralai/mistralai": "^1.5.2",
