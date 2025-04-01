@@ -1,35 +1,35 @@
 {
-	"name": "@hyperweb/agentic-tools",
-	"version": "0.0.1",
-	"description": "",
-	"main": "index.js",
-	"scripts": {
-		"build": "tsc && npm run copy-files && chmod 755 build/index.js",
-		"copy-files": "cp -r src/starship/tools/texts build/starship/tools/",
-		"clean": "rimraf build"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"type": "module",
-	"bin": {
-		"hyperweb": "./build/index.js"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
-		"@types/node": "^22.13.10",
-		"rimraf": "^6.0.1",
-		"tsx": "^4.19.3",
-		"typescript": "^5.8.2"
-	},
-	"files": ["build"],
-	"pnpm": {
-		"onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
-	},
-	"dependencies": {
-		"@mistralai/mistralai": "^1.5.2",
-		"@modelcontextprotocol/sdk": "^1.7.0",
-		"dotenv": "^16.4.7",
-		"zod": "^3.24.2"
-	}
+  "name": "@hyperweb/agentic-tools",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && npm run copy-files && chmod 755 build/index.js",
+    "copy-files": "cp -r src/starship/tools/texts build/starship/tools/",
+    "clean": "rimraf build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bin": {
+    "hyperweb": "./build/index.js"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.13.10",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "files": ["build"],
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+  },
+  "dependencies": {
+    "@mistralai/mistralai": "^1.5.2",
+    "@modelcontextprotocol/sdk": "^1.7.0",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.2"
+  }
 }

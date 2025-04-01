@@ -13,20 +13,20 @@ const fallbackText = `# Starship MCP Tool - Automated Setup Guide
 Please refer to the documentation for setup instructions.`;
 
 export const setupStarshipTool = createTool(async () => {
-	let text: string;
+  let text: string;
 
-	try {
-		text = readFileSync(promptPath, "utf-8");
-	} catch (error) {
-		text = fallbackText;
-	}
+  try {
+    text = readFileSync(promptPath, "utf-8");
+  } catch (error) {
+    text = fallbackText;
+  }
 
-	return {
-		content: [
-			{
-				type: "text",
-				text,
-			},
-		],
-	};
+  return {
+    content: [
+      {
+        type: "text",
+        text,
+      },
+    ],
+  };
 });
