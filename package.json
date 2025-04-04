@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "inspector": "npm run build && npm exec @modelcontextprotocol/inspector build/index.js",
+    "inspector": "npm run build && npm exec @modelcontextprotocol/inspector node build/index.js",
     "format": "biome check --write",
     "lint": "biome check"
   },

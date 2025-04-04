@@ -1,34 +1,30 @@
-# Agentic Tools
+# @hyperweb/agentic-tools
 
-A collection of TypeScript-based tools for building AI-powered applications using the Model Context Protocol and Mistral AI.
+This project implements a Model Context Protocol (MCP) server that helps you use Hyperweb platform tools better and easier with AI agents.
 
-## 🚀 Features
+## Setup
 
-- Built with TypeScript for type safety and better developer experience
-- Integration with Mistral AI API
-- Model Context Protocol SDK integration
-- Environment-based configuration
-- Modern development tooling (Biome, TypeScript)
+To run the Hyperweb MCP server using npx, use the following command:
 
-## 📋 Prerequisites
-
-- Node.js (Latest LTS version recommended)
-- pnpm package manager
+```bash
+npx -y @shopify/dev-mcp@latest
+```
 
 ## 🛠️ Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/agentic-tools.git
 cd agentic-tools
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 ```bash
 pnpm install
 ```
 
-3. Set up environment variables:
+1. Set up environment variables:
 ```bash
 cp .env.example .env
 ```
@@ -38,16 +34,27 @@ Edit the `.env` file with your configuration values.
 
 ### Available Scripts
 
-- `pnpm build` - Build the project
+- `pnpm build` - Build the project and copy prompts to build directory
 - `pnpm clean` - Clean build artifacts
-- `pnpm test` - Run tests (to be implemented)
+- `pnpm test` - Run tests
+- `pnpm inspector` - Run the MCP inspector with the server
+- `pnpm format` - Format code using Biome
+- `pnpm lint` - Lint code using Biome
+
+### Available Tools
+
+The server provides the following tools:
+
+| Tool Name | Description |
+|-----------|-------------|
+| starship-config-gen | Generate Starship configuration |
+| starship-setup | Setup Starship environment |
 
 ### Development Tools
 
 - **TypeScript** - For static typing and modern JavaScript features
 - **Biome** - For linting and formatting
 - **Model Context Protocol SDK** - For AI model interactions
-- **Mistral AI** - For advanced AI capabilities
 - **Zod** - For runtime type validation
 
 ## 📦 Project Structure
@@ -55,6 +62,9 @@ Edit the `.env` file with your configuration values.
 ```
 agentic-tools/
 ├── src/           # Source code
+│   └── starship/  # Starship-related tools and prompts
+│       ├── tools/ # Tool implementations
+│       └── prompts/ # Prompt templates
 ├── build/         # Compiled output
 ├── .env.example   # Example environment variables
 └── biome.json     # Biome configuration
@@ -71,4 +81,3 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - [Model Context Protocol](https://github.com/modelcontextprotocol/sdk)
-- [Mistral AI](https://mistral.ai/)
