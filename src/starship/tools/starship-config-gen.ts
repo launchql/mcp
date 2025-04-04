@@ -629,6 +629,17 @@ export function registerStarshipConfigGenTool(server: McpServer): void {
     "Parses and validates a Starship configuration YAML string against the known schema.",
     verifyStarshipConfigInputSchema.shape, // Use the verification schema shape
     async (input: VerifyStarshipConfigInput) => {
+      if (!input.yamlContent) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Starship has not been initialized yet. Skipping configuration verification.",
+            },
+          ],
+        };
+      }
+
       try {
         // 1. Parse the YAML string
         // Use load instead of safeLoad as safeLoad is not exposed in type defs
