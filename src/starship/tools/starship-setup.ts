@@ -10,8 +10,10 @@ const __dirname = dirname(__filename);
 const promptPath = join(__dirname, "../prompts", "setup-starship.md");
 
 // Fallback text in case file reading fails
-const fallbackText = `# Starship MCP Tool - Automated Setup Guide
-Please refer to the documentation for setup instructions.`;
+const fallbackInstructions = `
+  # Starship MCP Tool - Automated Setup Guide
+  Please refer to the documentation for setup instructions at: https://docs.hyperweb.io/starship
+`;
 
 export const setupStarshipTool = createTool(async () => {
   let text: string;
@@ -19,7 +21,7 @@ export const setupStarshipTool = createTool(async () => {
   try {
     text = readFileSync(promptPath, "utf-8");
   } catch (error) {
-    text = fallbackText;
+    text = fallbackInstructions;
   }
 
   return {

@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import YAML from "js-yaml";
 import { z } from "zod";
+import { writeFile } from "../../utils/file-system.js";
 
 // --- Resource Schema ---
 const resourceSchema = z
@@ -92,7 +93,6 @@ const chainUpgradeSchema = z
   );
 
 // --- Chain Genesis Schema ---
-// Use z.record(z.any()) for flexible patching, validation might be complex
 const chainGenesisSchema = z
   .object({
     app_state: z
@@ -183,7 +183,6 @@ const chainReadinessProbeSchema = z
       .int()
       .optional()
       .describe("How often to perform the probe"),
-    // Add other probe fields like timeoutSeconds, successThreshold, failureThreshold if needed
   })
   .optional()
   .describe("Custom readiness probe configuration for chain pods");
@@ -302,7 +301,6 @@ const relayerPortsSchema = z
   .describe("Port forwarding for the relayer (Hermes only)");
 
 // --- Relayer Config Schema (Hermes only) ---
-// Use z.record(z.any()) for flexibility, specific validation is complex
 const relayerConfigSchema = z
   .record(z.any())
   .optional()
@@ -404,6 +402,11 @@ const registrySchema = z
 
 // --- Define final input schema for GENERATION ---
 const starshipConfigInputSchema = z.object({
+  configFilePath: z
+    .string()
+    .describe(
+      "The absolute path to the Starship configuration file, default to '<current_working_directory>/starship/config.yaml'",
+    ),
   configName: z
     .string()
     .optional()
@@ -428,6 +431,11 @@ export type StarshipConfigInput = z.infer<typeof starshipConfigInputSchema>;
 
 // --- Define input schema for VERIFICATION ---
 const verifyStarshipConfigInputSchema = z.object({
+  configFilePath: z
+    .string()
+    .describe(
+      "The absolute path to the Starship configuration file, default to '<current_working_directory>/starship/config.yaml'",
+    ),
   yamlContent: z
     .string()
     .describe("The Starship configuration content in YAML format as a string."),
@@ -437,33 +445,227 @@ export type VerifyStarshipConfigInput = z.infer<
   typeof verifyStarshipConfigInputSchema
 >;
 
-// Define the output structure type (more detailed now)
-// Using 'any' for nested objects where structure can vary greatly (e.g., genesis, relayer config)
 // Consider creating more specific types if needed, but increases complexity
 interface StarshipConfig {
   name: string;
   version: string;
-  // biome-ignore lint/suspicious/noExplicitAny: Complex, variable structure from Zod input makes precise typing difficult for YAML generation.
-  chains: any[]; // Array of chain config objects
-  // biome-ignore lint/suspicious/noExplicitAny: Complex, variable structure from Zod input makes precise typing difficult for YAML generation.
-  relayers?: any[]; // Array of relayer config objects
-  // biome-ignore lint/suspicious/noExplicitAny: Complex, variable structure from Zod input makes precise typing difficult for YAML generation.
-  explorer?: any; // Explorer config object
-  // biome-ignore lint/suspicious/noExplicitAny: Complex, variable structure from Zod input makes precise typing difficult for YAML generation.
-  registry?: any; // Registry config object
+  chains: ChainOutput[]; // Use specific output type
+  relayers?: RelayerOutput[]; // Use specific output type
+  explorer?: ExplorerOutput; // Use specific output type
+  registry?: RegistryOutput; // Use specific output type
+}
+
+// --- Output Type Definitions ---
+interface PortConfig {
+  rest?: number;
+  rpc?: number;
+  grpc?: number;
+  faucet?: number;
+  exposer?: number;
+}
+
+interface ResourceConfig {
+  cpu?: string;
+  memory?: string;
+}
+
+interface FaucetConfig {
+  enabled?: boolean;
+  type?: "cosmjs" | "starship";
+  image?: string;
+  concurrency?: number;
+  resources?: ResourceConfig;
+}
+
+interface BuildConfig {
+  enabled: boolean;
+  source: string;
+}
+
+interface UpgradeEntry {
+  name: string;
+  version: string;
+}
+
+interface UpgradeConfig {
+  enabled: boolean;
+  type: "build";
+  genesis: string;
+  upgrades: UpgradeEntry[];
+}
+
+interface GenesisConfig {
+  app_state?: Record<string, unknown>; // Keep this flexible
+}
+
+interface ScriptEntry {
+  file: string;
+}
+interface ScriptsConfig {
+  createGenesis?: ScriptEntry;
+  updateGenesis?: ScriptEntry;
+  updateConfig?: ScriptEntry;
+  createValidator?: ScriptEntry;
+  transferTokens?: ScriptEntry;
+  buildChain?: ScriptEntry;
+}
+
+interface CometMockConfig {
+  enabled: boolean;
+  image?: string;
+}
+
+interface EnvVar {
+  name: string;
+  value: string;
+}
+
+interface IcsConfig {
+  enabled: boolean;
+  provider: string;
+}
+
+interface BalanceEntry {
+  address: string;
+  amount: string;
+}
+
+interface ReadinessProbeExec {
+  command: string[];
+}
+interface ReadinessProbeConfig {
+  exec?: ReadinessProbeExec;
+  initialDelaySeconds?: number;
+  periodSeconds?: number;
+}
+
+interface EthSubConfig {
+  enabled?: boolean;
+  image?: string;
+  numValidator?: number;
+}
+
+interface EthConfigOutput {
+  beacon?: EthSubConfig;
+  validator?: EthSubConfig;
+  prysmctl?: { image?: string };
+}
+
+interface ChainOutput {
+  id: string;
+  name: string;
+  numValidators: number;
+  image?: string;
+  home?: string;
+  binary?: string;
+  prefix?: string;
+  denom?: string;
+  coins?: string;
+  hdPath?: string;
+  coinType?: number;
+  repo?: string;
+  ports?: PortConfig;
+  resources?: ResourceConfig;
+  faucet?: FaucetConfig;
+  build?: BuildConfig;
+  upgrade?: UpgradeConfig;
+  genesis?: GenesisConfig;
+  scripts?: ScriptsConfig;
+  cometmock?: CometMockConfig;
+  env?: EnvVar[];
+  ics?: IcsConfig;
+  balances?: BalanceEntry[];
+  readinessProbe?: ReadinessProbeConfig;
+  config?: EthConfigOutput;
+}
+
+interface RelayerPortsConfig {
+  rest?: number;
+  exposer?: number;
+}
+
+interface RelayerHermesConfig {
+  config?: Record<string, unknown>; // Keep flexible
+  ports?: RelayerPortsConfig;
+  ics?: { enabled: boolean; consumer: string; provider: string };
+}
+
+interface RelayerOutput {
+  name: string;
+  type: "hermes" | "ts-relayer" | "go-relayer" | "neutron-query-relayer";
+  image?: string;
+  replicas?: number;
+  chains: string[];
+  config?: Record<string, unknown>; // Hermes specific
+  ports?: RelayerPortsConfig; // Hermes specific, optional
+  ics?: { enabled: boolean; consumer: string; provider: string }; // Hermes specific
+}
+
+interface ExplorerPortsConfig {
+  rest?: number;
+}
+interface ExplorerOutput {
+  enabled: boolean;
+  type?: "ping-pub";
+  ports?: ExplorerPortsConfig; // Optional now
+  resources?: ResourceConfig;
+  image?: string;
+}
+
+interface RegistryPortsConfig {
+  rest?: number;
+}
+interface RegistryOutput {
+  enabled: boolean;
+  localhost?: boolean;
+  ports?: RegistryPortsConfig; // Optional now
+  resources?: ResourceConfig;
+  image?: string;
 }
 
 /**
- * Generates the Starship configuration object based on input.
+ * Generates the Starship configuration object based on input, automatically resolving port conflicts.
  * @param input The validated configuration input.
  * @returns The configuration object ready for YAML conversion.
  */
 function buildStarshipConfigObject(input: StarshipConfigInput): StarshipConfig {
-  // Map chains, only including defined fields
-  const chains = input.chains.map((chainInput) => {
-    // biome-ignore lint/suspicious/noExplicitAny: Using any for the output object simplifies mapping from the detailed Zod schema to the flexible YAML structure.
-    const chainOutput: any = {}; // Start with an empty object
-    // Add fields only if they exist in the input
+  const assignedPorts = new Set<number>();
+  const MAX_PORT_INCREMENT_ATTEMPTS = 100;
+
+  /**
+   * Assigns a port, incrementing if the requested port is already taken.
+   * @param requestedPort The initially desired port number.
+   * @param assignedPorts The set of already assigned ports.
+   * @returns The assigned port number (either the original or an incremented one).
+   * @throws Error if an available port cannot be found within the attempt limit.
+   */
+  function assignPort(
+    requestedPort: number | undefined,
+    assignedPorts: Set<number>,
+  ): number | undefined {
+    if (requestedPort === undefined) {
+      return undefined;
+    }
+
+    let currentPort = requestedPort;
+    let attempts = 0;
+    while (assignedPorts.has(currentPort)) {
+      if (attempts >= MAX_PORT_INCREMENT_ATTEMPTS) {
+        throw new Error(
+          `Could not find an available port for requested port ${requestedPort} after ${MAX_PORT_INCREMENT_ATTEMPTS} attempts.`,
+        );
+      }
+      currentPort++;
+      attempts++;
+    }
+    assignedPorts.add(currentPort);
+    return currentPort;
+  }
+
+  // Map chains, resolving port conflicts
+  const chains: ChainOutput[] = input.chains.map((chainInput) => {
+    const chainOutput: Partial<ChainOutput> = {}; // Use Partial for building
+    // Copy basic fields
     chainOutput.id = chainInput.id;
     chainOutput.name = chainInput.name;
     chainOutput.numValidators = chainInput.numValidators;
@@ -476,79 +678,169 @@ function buildStarshipConfigObject(input: StarshipConfigInput): StarshipConfig {
     if (chainInput.hdPath) chainOutput.hdPath = chainInput.hdPath;
     if (chainInput.coinType) chainOutput.coinType = chainInput.coinType;
     if (chainInput.repo) chainOutput.repo = chainInput.repo;
-    if (chainInput.ports) chainOutput.ports = chainInput.ports; // Copy ports object directly if present
+
+    // Assign ports, resolving conflicts
+    const assignedChainPorts: Partial<PortConfig> = {};
+    if (chainInput.ports) {
+      if (chainInput.ports.rest !== undefined) {
+        assignedChainPorts.rest = assignPort(
+          chainInput.ports.rest,
+          assignedPorts,
+        );
+      }
+      if (chainInput.ports.rpc !== undefined) {
+        assignedChainPorts.rpc = assignPort(
+          chainInput.ports.rpc,
+          assignedPorts,
+        );
+      }
+      if (chainInput.ports.grpc !== undefined) {
+        assignedChainPorts.grpc = assignPort(
+          chainInput.ports.grpc,
+          assignedPorts,
+        );
+      }
+      if (chainInput.ports.faucet !== undefined) {
+        assignedChainPorts.faucet = assignPort(
+          chainInput.ports.faucet,
+          assignedPorts,
+        );
+      }
+      if (chainInput.ports.exposer !== undefined) {
+        assignedChainPorts.exposer = assignPort(
+          chainInput.ports.exposer,
+          assignedPorts,
+        );
+      }
+    }
+    // Add ports object only if it contains assigned ports
+    if (Object.keys(assignedChainPorts).length > 0) {
+      chainOutput.ports = assignedChainPorts as PortConfig;
+    }
+
+    // Copy other complex fields
     if (chainInput.resources) chainOutput.resources = chainInput.resources;
-    if (chainInput.faucet) chainOutput.faucet = chainInput.faucet; // Direct copy
-    if (chainInput.build) chainOutput.build = chainInput.build; // Direct copy
-    if (chainInput.upgrade) chainOutput.upgrade = chainInput.upgrade; // Direct copy
-    if (chainInput.genesis) chainOutput.genesis = chainInput.genesis; // Direct copy
-    if (chainInput.scripts) chainOutput.scripts = chainInput.scripts; // Direct copy
-    if (chainInput.cometmock) chainOutput.cometmock = chainInput.cometmock; // Direct copy
+    if (chainInput.faucet) chainOutput.faucet = chainInput.faucet;
+    if (chainInput.build) chainOutput.build = chainInput.build;
+    if (chainInput.upgrade) chainOutput.upgrade = chainInput.upgrade;
+    if (chainInput.genesis)
+      chainOutput.genesis = chainInput.genesis as GenesisConfig; // Cast needed
+    if (chainInput.scripts) chainOutput.scripts = chainInput.scripts;
+    if (chainInput.cometmock) chainOutput.cometmock = chainInput.cometmock;
     if (chainInput.env && chainInput.env.length > 0)
       chainOutput.env = chainInput.env;
-    if (chainInput.ics) chainOutput.ics = chainInput.ics; // Direct copy
+    if (chainInput.ics) chainOutput.ics = chainInput.ics;
     if (chainInput.balances && chainInput.balances.length > 0)
       chainOutput.balances = chainInput.balances;
     if (chainInput.readinessProbe)
-      chainOutput.readinessProbe = chainInput.readinessProbe; // Direct copy
+      chainOutput.readinessProbe = chainInput.readinessProbe;
     if (chainInput.name === "ethereum" && chainInput.config)
-      chainOutput.config = chainInput.config; // Add Ethereum config if name matches
+      chainOutput.config = chainInput.config;
 
-    return chainOutput;
+    return chainOutput as ChainOutput; // Cast to final type
   });
 
-  // Map relayers, only including defined fields
-  const relayers = input.relayers
+  // Map relayers, resolving port conflicts
+  const relayers: RelayerOutput[] | undefined = input.relayers
     ? input.relayers.map((relayerInput) => {
-        // biome-ignore lint/suspicious/noExplicitAny: Using any for the output object simplifies mapping from the detailed Zod schema to the flexible YAML structure.
-        const relayerOutput: any = {};
+        const relayerOutput: Partial<RelayerOutput> = {}; // Use Partial
         relayerOutput.name = relayerInput.name;
         relayerOutput.type = relayerInput.type;
         if (relayerInput.image) relayerOutput.image = relayerInput.image;
-        relayerOutput.replicas = relayerInput.replicas; // Default is 1 handled by Zod
+        relayerOutput.replicas = relayerInput.replicas;
         relayerOutput.chains = relayerInput.chains;
-        // Hermes specific fields
+
+        // Hermes specific fields with port resolution
         if (relayerInput.type === "hermes") {
-          if (relayerInput.config) relayerOutput.config = relayerInput.config;
-          if (relayerInput.ports) relayerOutput.ports = relayerInput.ports;
+          if (relayerInput.config)
+            relayerOutput.config = relayerInput.config as Record<
+              string,
+              unknown
+            >;
+          const assignedRelayerPorts: Partial<RelayerPortsConfig> = {};
+          if (relayerInput.ports) {
+            if (relayerInput.ports.rest !== undefined) {
+              assignedRelayerPorts.rest = assignPort(
+                relayerInput.ports.rest,
+                assignedPorts,
+              );
+            }
+            if (relayerInput.ports.exposer !== undefined) {
+              assignedRelayerPorts.exposer = assignPort(
+                relayerInput.ports.exposer,
+                assignedPorts,
+              );
+            }
+          }
+          // Add ports object only if it contains assigned ports
+          if (Object.keys(assignedRelayerPorts).length > 0) {
+            relayerOutput.ports = assignedRelayerPorts as RelayerPortsConfig;
+          }
           if (relayerInput.ics) relayerOutput.ics = relayerInput.ics;
         }
-        return relayerOutput;
+        return relayerOutput as RelayerOutput; // Cast to final type
       })
     : undefined;
 
-  // Build explorer config if enabled
-  // biome-ignore lint/suspicious/noExplicitAny: Using any for the output object simplifies mapping from the detailed Zod schema to the flexible YAML structure.
-  let explorer: any | undefined = undefined;
+  // Build explorer config if enabled, resolving port conflicts
+  let explorer: ExplorerOutput | undefined = undefined;
   if (input.explorer?.enabled) {
-    explorer = { enabled: true }; // Base object
-    if (input.explorer.type) explorer.type = input.explorer.type;
-    if (input.explorer.ports) explorer.ports = input.explorer.ports;
-    if (input.explorer.resources) explorer.resources = input.explorer.resources;
-    if (input.explorer.image) explorer.image = input.explorer.image;
+    const explorerOutput: Partial<ExplorerOutput> = { enabled: true }; // Use Partial
+    if (input.explorer.type) explorerOutput.type = input.explorer.type;
+    const assignedExplorerPorts: Partial<ExplorerPortsConfig> = {};
+    if (input.explorer.ports) {
+      if (input.explorer.ports.rest !== undefined) {
+        assignedExplorerPorts.rest = assignPort(
+          input.explorer.ports.rest,
+          assignedPorts,
+        );
+      }
+    }
+    // Add ports object only if it contains assigned ports
+    if (Object.keys(assignedExplorerPorts).length > 0) {
+      explorerOutput.ports = assignedExplorerPorts as ExplorerPortsConfig;
+    }
+
+    if (input.explorer.resources)
+      explorerOutput.resources = input.explorer.resources;
+    if (input.explorer.image) explorerOutput.image = input.explorer.image;
+    explorer = explorerOutput as ExplorerOutput; // Cast to final type
   }
 
-  // Build registry config if enabled
-  // biome-ignore lint/suspicious/noExplicitAny: Using any for the output object simplifies mapping from the detailed Zod schema to the flexible YAML structure.
-  let registry: any | undefined = undefined;
+  // Build registry config if enabled, resolving port conflicts
+  let registry: RegistryOutput | undefined = undefined;
   if (input.registry?.enabled) {
-    registry = { enabled: true }; // Base object
+    const registryOutput: Partial<RegistryOutput> = { enabled: true }; // Use Partial
     if (input.registry.localhost !== undefined)
-      // Handle boolean default
-      registry.localhost = input.registry.localhost;
-    if (input.registry.ports) registry.ports = input.registry.ports;
-    if (input.registry.resources) registry.resources = input.registry.resources;
-    if (input.registry.image) registry.image = input.registry.image;
+      registryOutput.localhost = input.registry.localhost;
+    const assignedRegistryPorts: Partial<RegistryPortsConfig> = {};
+    if (input.registry.ports) {
+      if (input.registry.ports.rest !== undefined) {
+        assignedRegistryPorts.rest = assignPort(
+          input.registry.ports.rest,
+          assignedPorts,
+        );
+      }
+    }
+    // Add ports object only if it contains assigned ports
+    if (Object.keys(assignedRegistryPorts).length > 0) {
+      registryOutput.ports = assignedRegistryPorts as RegistryPortsConfig;
+    }
+
+    if (input.registry.resources)
+      registryOutput.resources = input.registry.resources;
+    if (input.registry.image) registryOutput.image = input.registry.image;
+    registry = registryOutput as RegistryOutput; // Cast to final type
   }
 
   // Construct the final configuration object
   const config: StarshipConfig = {
-    name: input.configName, // Defaults handled by Zod
-    version: input.configVersion, // Defaults handled by Zod
+    name: input.configName,
+    version: input.configVersion,
     chains: chains,
   };
 
-  // Add optional top-level fields if they exist
+  // Add optional top-level fields if they exist and are not empty
   if (relayers && relayers.length > 0) {
     config.relayers = relayers;
   }
@@ -583,11 +875,13 @@ export function registerStarshipConfigGenTool(server: McpServer): void {
   // --- Generate Tool ---
   server.tool(
     "generateStarshipConfig",
-    "Generates a Starship configuration file in YAML format based on detailed input options.",
-    starshipConfigInputSchema.shape, // Use the generation schema shape
+    "Generates a Starship configuration file in YAML format based on detailed input options then creates the file starship/config.yaml in the workspace root.",
+    starshipConfigInputSchema.shape,
     async (input: StarshipConfigInput) => {
       try {
         const yamlConfig = generateStarshipYaml(input);
+        await writeFile(input.configFilePath, yamlConfig);
+
         return {
           content: [
             {
@@ -694,7 +988,7 @@ export function registerStarshipConfigGenTool(server: McpServer): void {
           errorMessage = `An unknown error occurred during verification: ${String(err)}`;
         }
         console.error("Verification Error:", err);
-        // Use MCP error format
+
         return {
           isError: true,
           content: [

@@ -1,11 +1,11 @@
 {
-  "name": "@hyperweb/agentic-tools",
+  "name": "@hyperweb/mcp-server",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "Model Context Protocol Hyperweb products",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc && npm run copy-prompts && chmod 755 build/index.js",
-    "copy-prompts": "cp -r src/starship/prompts build/starship/prompts/",
+    "copy-prompts": "mkdir -p build/starship && cp -r src/starship/prompts build/starship/",
     "clean": "rimraf build",
     "test": "vitest",
     "test:watch": "vitest --watch",
@@ -19,7 +19,7 @@
   "license": "ISC",
   "type": "module",
   "bin": {
-    "hyperweb-mcp": "./build/index.js"
+    "@hyperweb/mcp-server": "./build/index.js"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -42,6 +42,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
     "dotenv": "^16.4.7",
+    "js-yaml": "^4.1.0",
     "zod": "^3.24.2"
   }
 }

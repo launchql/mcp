@@ -15,6 +15,7 @@ describe("generateStarshipYaml", () => {
 
   it("should generate a basic YAML config with chains only", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "test-ship",
       configVersion: "1.0.0",
       chains: [
@@ -43,6 +44,7 @@ chains:
 
   it("should include relayers, explorer, and registry when provided", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "full-ship",
       configVersion: "1.5.0",
       chains: [
@@ -118,6 +120,7 @@ registry:
 
   it("should handle missing optional fields gracefully", () => {
     const inputWithDefaultsApplied: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -138,6 +141,7 @@ chains:
 
   it("should include chain-level optional fields like image, resources, faucet", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -177,6 +181,7 @@ chains:
 
   it("should include custom chain configuration", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -219,6 +224,7 @@ chains:
 
   it("should include build configuration", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -252,6 +258,7 @@ chains:
 
   it("should include upgrade configuration", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -296,6 +303,7 @@ chains:
 
   it("should include genesis patching configuration", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -333,6 +341,7 @@ chains:
 
   it("should include chain env variables", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -365,6 +374,7 @@ chains:
 
   it("should include ICS configuration for chain and relayer", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -427,6 +437,7 @@ relayers:
 
   it("should include custom balances configuration", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -465,6 +476,7 @@ chains:
 
   it("should include Ethereum configuration", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -519,6 +531,7 @@ chains:
 
   it("should include Hermes relayer specific config and ports", () => {
     const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
       configName: "starship",
       configVersion: "1.6.0",
       chains: [
@@ -581,5 +594,170 @@ relayers:
 `;
     const resultYaml = generateStarshipYaml(input);
     expect(normalizeYaml(resultYaml)).toEqual(normalizeYaml(expectedYaml));
+  });
+
+  it("should automatically resolve overlapping port conflicts by incrementing", () => {
+    // Input with overlapping port 1317
+    const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
+      configName: "overlap-resolve-ship",
+      configVersion: "1.0.0",
+      chains: [
+        {
+          id: "chain-a",
+          name: "gaia",
+          numValidators: 1,
+          ports: { rest: 1317, rpc: 26657 }, // Request 1317, 26657
+        },
+        {
+          id: "chain-b",
+          name: "osmosis",
+          numValidators: 1,
+          ports: { rest: 8080, rpc: 1317 }, // Request 8080, 1317 (conflict)
+        },
+      ],
+      relayers: [
+        {
+          name: "hermes-overlap",
+          type: "hermes",
+          replicas: 1,
+          chains: ["chain-a", "chain-b"],
+          ports: { rest: 1317, exposer: 9090 }, // Request 1317 (conflict), 9090
+        },
+      ],
+      explorer: {
+        enabled: true,
+        type: "ping-pub",
+        ports: { rest: 1317 }, // Request 1317 (conflict)
+      },
+      registry: {
+        enabled: true,
+        localhost: true,
+        ports: { rest: 1317 }, // Request 1317 (conflict)
+      },
+    };
+
+    // Expected output with resolved ports (1317 -> 1318, 1319, 1320, ...)
+    const expectedYaml = `name: overlap-resolve-ship
+version: 1.0.0
+chains:
+  - id: chain-a
+    name: gaia
+    numValidators: 1
+    ports:
+      rest: 1317    # Assigned first
+      rpc: 26657    # Assigned
+  - id: chain-b
+    name: osmosis
+    numValidators: 1
+    ports:
+      rest: 8080    # Assigned
+      rpc: 1318    # Incremented from 1317
+relayers:
+  - name: hermes-overlap
+    type: hermes
+    replicas: 1
+    chains:
+      - chain-a
+      - chain-b
+    ports:
+      rest: 1319    # Incremented from 1317
+      exposer: 9090 # Assigned
+explorer:
+  enabled: true
+  type: ping-pub
+  ports:
+    rest: 1320    # Incremented from 1317
+registry:
+  enabled: true
+  localhost: true
+  ports:
+    rest: 1321    # Incremented from 1317
+`;
+    const resultYaml = generateStarshipYaml(input);
+    // Normalize YAML to ignore comments and spacing differences
+    const normalizeYamlForTest = (yaml: string) =>
+      yaml
+        .split("\n")
+        .map((line) => line.replace(/#.*$/, "").trim()) // Remove comments and trim
+        .filter((line) => line)
+        .join("\n");
+
+    expect(normalizeYamlForTest(resultYaml)).toEqual(
+      normalizeYamlForTest(expectedYaml),
+    );
+  });
+
+  it("should resolve scattered overlapping ports correctly", () => {
+    // Input where port 1317 is requested again after other ports are assigned
+    const input: StarshipConfigInput = {
+      configFilePath: "/tmp/starship/config.yaml",
+      configName: "scattered-overlap-ship",
+      configVersion: "1.0.0",
+      chains: [
+        {
+          id: "chain-a",
+          name: "gaia",
+          numValidators: 1,
+          ports: { rest: 1317, rpc: 26657 }, // Request 1317, 26657
+        },
+        {
+          id: "chain-b",
+          name: "osmosis",
+          numValidators: 1,
+          ports: { rest: 8080 }, // Request 8080 (no conflict yet)
+        },
+        {
+          id: "chain-c",
+          name: "juno",
+          numValidators: 1,
+          ports: { rest: 1317 }, // Request 1317 again (conflict)
+        },
+      ],
+      registry: {
+        enabled: true,
+        localhost: true,
+        ports: { rest: 8080 }, // Request 8080 again (conflict)
+      },
+    };
+
+    // Expected output with resolved scattered ports
+    const expectedYaml = `name: scattered-overlap-ship
+version: 1.0.0
+chains:
+  - id: chain-a
+    name: gaia
+    numValidators: 1
+    ports:
+      rest: 1317    # Assigned first
+      rpc: 26657    # Assigned
+  - id: chain-b
+    name: osmosis
+    numValidators: 1
+    ports:
+      rest: 8080    # Assigned
+  - id: chain-c
+    name: juno
+    numValidators: 1
+    ports:
+      rest: 1318    # Incremented from 1317
+registry:
+  enabled: true
+  localhost: true
+  ports:
+    rest: 8081    # Incremented from 8080
+`;
+    const resultYaml = generateStarshipYaml(input);
+    // Normalize YAML to ignore comments and spacing differences
+    const normalizeYamlForTest = (yaml: string) =>
+      yaml
+        .split("\n")
+        .map((line) => line.replace(/#.*$/, "").trim()) // Remove comments and trim
+        .filter((line) => line)
+        .join("\n");
+
+    expect(normalizeYamlForTest(resultYaml)).toEqual(
+      normalizeYamlForTest(expectedYaml),
+    );
   });
 });

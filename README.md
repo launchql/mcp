@@ -1,4 +1,4 @@
-# @hyperweb/agentic-tools
+# @hyperweb/mcp-server
 
 This project implements a Model Context Protocol (MCP) server that helps you use Hyperweb platform tools better and easier with AI agents.
 
@@ -7,30 +7,36 @@ This project implements a Model Context Protocol (MCP) server that helps you use
 To run the Hyperweb MCP server using npx, use the following command:
 
 ```bash
-npx -y @shopify/dev-mcp@latest
+npx -y @hyperweb/mcp-server@latest
 ```
 
-## 🛠️ Installation
+## Usage with Cursor or Claude Desktop
 
-1. Clone the repository:
+Add the following configuration. For more information, read the [Cursor MCP documentation](https://docs.cursor.com/context/model-context-protocol) or the [Claude Desktop MCP guide](https://modelcontextprotocol.io/quickstart/user).
 
-```bash
-git clone https://github.com/yourusername/agentic-tools.git
-cd agentic-tools
+```json
+{
+  "mcpServers": {
+    "hyperweb-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@hyperweb/mcp-server@latest"]
+    }
+  }
+}
 ```
 
-1. Install dependencies:
-```bash
-pnpm install
-```
+On Windows, you might need to use this alternative configuration:
 
-1. Set up environment variables:
-```bash
-cp .env.example .env
+```json
+{
+  "mcpServers": {
+    "hyperweb-mcp-server": {
+      "command": "cmd",
+      "args": ["/k", "npx", "-y", "@hyperweb/mcp-server@latest"]
+    }
+  }
+}
 ```
-Edit the `.env` file with your configuration values.
-
-## 🔧 Development
 
 ### Available Scripts
 
@@ -47,8 +53,9 @@ The server provides the following tools:
 
 | Tool Name | Description |
 |-----------|-------------|
-| starship-config-gen | Generate Starship configuration |
-| starship-setup | Setup Starship environment |
+| generateStarshipConfig | Generate Starship configuration |
+| verifyStarshipConfig | Verify a Starship configuration |
+| setupStarship | Setup Starship environment |
 
 ### Development Tools
 
@@ -59,7 +66,7 @@ The server provides the following tools:
 
 ## 📦 Project Structure
 
-```
+```md
 agentic-tools/
 ├── src/           # Source code
 │   └── starship/  # Starship-related tools and prompts
