@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { registerMigrateToInterchainjsTool } from "./interchainjs/tools/migrate-to-interchainjs.js";
 import { registerStarshipConfigGenTool } from "./starship/tools/starship-config-gen.js";
 import { registerStarshipSetupTool } from "./starship/tools/starship-setup.js";
 
@@ -25,8 +26,12 @@ async function main() {
     version: VERSION,
   });
 
-  registerStarshipConfigGenTool(server);
+  // Starship
   registerStarshipSetupTool(server);
+  registerStarshipConfigGenTool(server);
+
+  // InterchainJS
+  registerMigrateToInterchainjsTool(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

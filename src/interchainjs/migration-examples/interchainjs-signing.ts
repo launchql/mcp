@@ -87,6 +87,3 @@ async function signAndBroadcast() {
 
 // --- Execute the function ---
 // signAndBroadcast(); // Uncomment to run, requires valid RPC and mnemonic
-
-console.log("Example interchainjs signing code structure loaded.");
-console.log("Ensure RPC endpoint and mnemonic are configured before running.");

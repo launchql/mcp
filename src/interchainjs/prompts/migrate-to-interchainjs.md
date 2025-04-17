@@ -12,6 +12,10 @@ Migrate the provided CosmJS TypeScript code snippet (available in the IDE contex
 
 {{API_MAPPINGS}}
 
+## Migration Examples
+
+{{MIGRATION_EXAMPLES}}
+
 ## Migration Steps
 
 ### Step 1: Package Installation (REQUIRED, NEVER SKIP THIS STEP)
@@ -19,9 +23,9 @@ Migrate the provided CosmJS TypeScript code snippet (available in the IDE contex
 ⚠️ IMPORTANT: This step MUST be completed before proceeding with the migration.
 
 1. Analyze the code for required InterchainJS packages
-2. Detect the project's package manager (npm, yarn, or pnpm)
-3. Output the exact installation command(s) for any missing packages
-4. Run the installation command(s)
+2. Note the specified package manager for this project: `{{PACKAGE_MANAGER}}`.
+3. **CRITICAL:** You **MUST** use the specified package manager (`{{PACKAGE_MANAGER}}`) to generate the installation commands. The command format MUST be exactly: `{{PACKAGE_MANAGER}} install/add <package_name>`. ❗ **DO NOT DEVIATE FROM THIS.**
+4. Run the installation command(s).
 
 Only after completing the package installation, proceed with the code migration.
 
@@ -47,3 +51,5 @@ Preserve variable names and the core logic structure unless changes are strictly
 - If some cosmjs APIs are not supported by InterchainJS, add a comment: `// Note: This feature may need manual migration.`
 - Ensure the output code is valid TypeScript/JavaScript and follows InterchainJS best practices.
 - If encountering "Cannot find module ... or its corresponding type declarations." linter error after migration, detect the package manager of the project and use it to install the missing packages.
+- Don't create new files for the migration, only modify the existing files.
+- If you are unsure about the migration, don't make assumptions, add a comment: `// Note: This feature may need manual migration.`

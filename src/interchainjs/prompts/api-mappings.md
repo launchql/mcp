@@ -73,6 +73,11 @@ import { send } from 'interchainjs/cosmos/bank/v1beta1/tx.rpc.func';
 const result = await send(signingClient, senderAddress, msgPayload, fee, memo); // Call the specific function
 ```
 
+**Note: Differences between `@interchainjs/cosmos` and `interchainjs`**
+
+- `@interchainjs/cosmos` is for signers, wallets and signing clients.
+- `interchainjs` is for transaction methods, query methods, types, constants and utils of all modules.
+
 ### Packages Differences
 
 Comparison symbol meanings:
@@ -315,3 +320,7 @@ import { QueryBalanceRequest } from 'cosmjs-types/cosmos/bank/v1beta1/query';
 // InterchainJS
 import { QueryBalanceRequest } from '@interchainjs/cosmos-types/cosmos/bank/v1beta1/query';
 ```
+
+**Note**
+
+- Prefer using `interchainjs/cosmos/...` over `@interchainjs/cosmos-types` for the types.

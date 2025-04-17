@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,10 +16,8 @@ const PROMPT_TEMPLATE_PATH = join(
 );
 const API_MAPPINGS_PATH = join(__dirname, "../prompts", "api-mappings.md");
 
-// Removed API_MAPPINGS_PATH as mappings are now inline or in examples
-const EXAMPLES_DIR = join(__dirname, "../migration-examples"); // Adjust path as needed
+const EXAMPLES_DIR = join(__dirname, "../migration-examples");
 
-// Paths to example files
 const COSMJS_UTILS_EXAMPLE_PATH = join(EXAMPLES_DIR, "cosmjs-utils.ts");
 const INTERCHAINJS_UTILS_EXAMPLE_PATH = join(
   EXAMPLES_DIR,
@@ -30,7 +29,6 @@ const INTERCHAINJS_SIGNING_EXAMPLE_PATH = join(
   "interchainjs-signing.ts",
 );
 
-// Example file paths grouped for easier processing
 const EXAMPLE_FILES = [
   {
     title: "Utility Functions Migration",
@@ -42,7 +40,6 @@ const EXAMPLE_FILES = [
     cosmjsPath: COSMJS_SIGNING_EXAMPLE_PATH,
     interchainjsPath: INTERCHAINJS_SIGNING_EXAMPLE_PATH,
   },
-  // Add more example pairs here if needed
 ];
 
 const FALLBACK_MESSAGE = `
@@ -99,7 +96,9 @@ ${interchainjsCode.trim()}
  * @param userCode - The CosmJS code provided by the user (used for validation, not injection).
  * @returns The fully constructed prompt string or null if template or any example file is missing.
  */
-function buildMigrationPrompt(): string | null {
+function buildMigrationPrompt(
+  packageManager: "npm" | "yarn" | "pnpm",
+): string | null {
   // Keep userCode parameter for potential future validation or use, even if not injected
   const promptTemplate = readFileContent(PROMPT_TEMPLATE_PATH);
   const apiMappings = readFileContent(API_MAPPINGS_PATH);
@@ -132,9 +131,10 @@ function buildMigrationPrompt(): string | null {
     );
   }
 
-  // Replace placeholders - first mappings, then examples
+  // Replace placeholders - first mappings, then examples, then package manager
   let prompt = promptTemplate.replace("{{API_MAPPINGS}}", apiMappings.trim());
   prompt = prompt.replace("{{MIGRATION_EXAMPLES}}", examplesMarkdown.trim());
+  prompt = prompt.replace(/\{\{PACKAGE_MANAGER\}\}/g, packageManager);
 
   return prompt;
 }
@@ -150,22 +150,25 @@ export function registerMigrateToInterchainjsTool(server: McpServer): void {
   server.tool(
     "migrateToInterchainjs",
     "Generates a prompt for an LLM to migrate CosmJS code to InterchainJS.",
-    async () => {
-      const prompt = buildMigrationPrompt();
+    {
+      packageManager: z
+        .enum(["npm", "yarn", "pnpm"])
+        .describe(
+          "The package manager (npm, yarn, or pnpm) detected in the target project. This value MUST be correctly determined and provided by the caller.",
+        ),
+    },
+    async ({ packageManager }) => {
+      const prompt = buildMigrationPrompt(packageManager);
 
       if (prompt === null) {
-        // Error occurred during prompt building (template or examples missing)
         return {
           content: [{ type: "text", text: FALLBACK_MESSAGE }],
         };
       }
 
-      // Successfully generated the prompt
       return {
         content: [{ type: "text", text: prompt }],
       };
     },
   );
 }
-
-// console.log("prompt", buildMigrationPrompt());
