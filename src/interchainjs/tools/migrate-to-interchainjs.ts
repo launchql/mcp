@@ -99,7 +99,6 @@ ${interchainjsCode.trim()}
 function buildMigrationPrompt(
   packageManager: "npm" | "yarn" | "pnpm",
 ): string | null {
-  // Keep userCode parameter for potential future validation or use, even if not injected
   const promptTemplate = readFileContent(PROMPT_TEMPLATE_PATH);
   const apiMappings = readFileContent(API_MAPPINGS_PATH);
 
@@ -121,7 +120,7 @@ function buildMigrationPrompt(
       console.error(
         `Failed to load one or both example files for '${example.title}'. CosmJS: ${example.cosmjsPath}, InterchainJS: ${example.interchainjsPath}`,
       );
-      return null; // Indicate failure if any example file is missing
+      return null;
     }
 
     examplesMarkdown += formatExampleMarkdown(
@@ -131,7 +130,6 @@ function buildMigrationPrompt(
     );
   }
 
-  // Replace placeholders - first mappings, then examples, then package manager
   let prompt = promptTemplate.replace("{{API_MAPPINGS}}", apiMappings.trim());
   prompt = prompt.replace("{{MIGRATION_EXAMPLES}}", examplesMarkdown.trim());
   prompt = prompt.replace(/\{\{PACKAGE_MANAGER\}\}/g, packageManager);
@@ -141,15 +139,10 @@ function buildMigrationPrompt(
 
 // --- MCP Tool Registration ---
 
-/**
- * Registers the MCP tool that generates a detailed prompt for an LLM
- * to migrate CosmJS code to InterchainJS, using inline simple mappings
- * and complex examples loaded from external files.
- */
 export function registerMigrateToInterchainjsTool(server: McpServer): void {
   server.tool(
     "migrateToInterchainjs",
-    "Generates a prompt for an LLM to migrate CosmJS code to InterchainJS.",
+    "Migrate CosmJS code to InterchainJS. REQUIRES the project's package manager (npm, yarn, or pnpm) to be correctly specified for proper dependency installation commands.",
     {
       packageManager: z
         .enum(["npm", "yarn", "pnpm"])

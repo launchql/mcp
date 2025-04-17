@@ -22,12 +22,17 @@ Migrate the provided CosmJS TypeScript code snippet (available in the IDE contex
 
 ⚠️ IMPORTANT: This step MUST be completed before proceeding with the migration.
 
-1. Analyze the code for required InterchainJS packages
+1. Carefully analyze the code to identify ONLY the InterchainJS packages that are directly needed for the migration
 2. Note the specified package manager for this project: `{{PACKAGE_MANAGER}}`.
-3. **CRITICAL:** You **MUST** use the specified package manager (`{{PACKAGE_MANAGER}}`) to generate the installation commands. The command format MUST be exactly: `{{PACKAGE_MANAGER}} install/add <package_name>`. ❗ **DO NOT DEVIATE FROM THIS.**
-4. Run the installation command(s).
+3. **CRITICAL:**
+   - You **MUST** use the specified package manager (`{{PACKAGE_MANAGER}}`) to generate the installation commands
+   - The command format MUST be exactly: `{{PACKAGE_MANAGER}} install/add <package_name>`
+   - Install ONLY the packages that are actually used in the code being migrated
+   - DO NOT install packages that aren't directly referenced in the code
+   - ❗ **DO NOT DEVIATE FROM THIS.**
+4. Run the installation command(s) for only the necessary packages.
 
-Only after completing the package installation, proceed with the code migration.
+Only after completing the targeted package installation, proceed with the code migration.
 
 ### Step 2: Code Migration
 
