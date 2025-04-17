@@ -1,6 +1,6 @@
 {
   "name": "@hyperweb/mcp-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Model Context Protocol Hyperweb products",
   "main": "build/index.js",
   "scripts": {
@@ -30,9 +30,14 @@
     "typescript": "^5.8.2",
     "vitest": "^3.1.1"
   },
-  "files": ["build"],
+  "files": [
+    "build"
+  ],
   "pnpm": {
-    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "esbuild"
+    ]
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
