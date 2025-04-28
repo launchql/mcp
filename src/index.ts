@@ -11,6 +11,7 @@ import { registerUseInterchainjsTool } from './interchainjs/tools/use-interchain
 import { registerStarshipConfigGenTool } from './starship/tools/starship-config-gen.js';
 import { registerStarshipSetupTool } from './starship/tools/starship-setup.js';
 import { registerUseChainRegistryTool } from './chain-registry/tools/use-chain-registry.js';
+import { registerUseInterchainKitTool } from './interchain-kit/tools/use-interchain-kit.js';
 
 // Get package.json version
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,9 @@ async function main() {
 
   // Chain Registry
   registerUseChainRegistryTool(server);
+
+  // Interchain Kit
+  registerUseInterchainKitTool(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

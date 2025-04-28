@@ -1,0 +1,442 @@
+
+TITLE: Using useChain Hook (Vue)
+DESCRIPTION: This Vue SFC demonstrates the usage of the useChain hook to access chain-specific data like address, query client, and signing client for a given chain name. It also shows how to watch the queryClient to fetch account balance once the client is available.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_4
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useChain } from '@interchain-kit/vue';
+
+const chainName = ref('osmosistestnet')
+const { address } = useChain(chainName);
+</script>
+
+<template>
+  <div>
+    <div>address: {{ address }}</div>
+  </div>
+</template>
+
+<style scoped>
+</style>
+```
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useChain } from '@interchain-kit/vue';
+
+const chainName = ref('osmosistestnet')
+const { chain, assetList, address, wallet, queryClient, signingClient } = useChain(chainName)
+const balance = ref('0')
+
+watch(queryClient, async(client) => {
+  if (client) {
+    const {balance: bc} =  await queryClient.value.balance({
+      address: address.value,
+      denom: 'uosmo',
+    })
+		balance.value = bc?.amount || '0'
+  }
+})
+</script>
+
+<template>
+  <div>
+    <div>chain: {{ chain.prettyName }}</div>
+    <div>assetList: {{ assetList?.assets?.length }}</div>
+    <div>address: {{ address }}</div>
+    <div>wallet: {{ wallet?.option?.prettyName }}</div>
+    <div>balance: {{ balance }}</div>
+  </div>
+</template>
+
+<style scoped>
+</style>
+
+
+```
+
+----------------------------------------
+
+TITLE: Using useChainWallet and useWalletManager Hooks (Vue)
+DESCRIPTION: This Vue SFC demonstrates how to use the useChainWallet hook to get chain-wallet specific data (like address) for multiple chain/wallet combinations. It also shows how to use the useWalletManager hook to programmatically connect wallets.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_6
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useChainWallet, useWalletManager } from '@interchain-kit/vue';
+
+const junoChainName = ref('juno')
+const keplrWalletName = ref('keplr-extension')
+const juno = useChainWallet(junoChainName, keplrWalletName);
+
+const stargazeChainName = ref('stargaze')
+const leapWalletName = ref('leap-extension')
+const stargaze = useChainWallet(stargazeChainName, leapWalletName);
+
+const walletManager = useWalletManager()
+	
+const connectKeplr = async() => {
+    await walletManager.connect('keplr-extension')
+}
+const connectLeap = async() => {
+    await walletManager.connect('leap-extension')
+}
+</script>
+
+<template>
+  <div>
+    <button @click="connectKeplr">connect keplr</button>
+    <button @click="connectLeap">connect leap</button>
+    <div>juno address: {{ juno.address }}</div>
+    <div>stargaze address: {{ stargaze.address }}</div>
+  </div>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: Basic useChain Hook Example (show.vue)
+DESCRIPTION: This Vue component demonstrates basic usage of the `useChain` hook to get the connected wallet address for a specific chain. It requires a `chainName` and returns reactive state like the address.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/vue/README.md#_snippet_5
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useChain } from '@interchain-kit/vue';
+
+const chainName = ref('osmosis')
+const { address } = useChain(chainName);
+</script>
+
+<template>
+  <div>
+    <div>address: {{ address }}</div>
+  </div>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: useChainWallet and useWalletManager Hooks Example
+DESCRIPTION: This Vue component demonstrates using `useChainWallet` to get specific chain/wallet connections (e.g., Juno with Keplr, Stargaze with Leap) and `useWalletManager` to trigger wallet connection actions programmatically. It shows how to access addresses for specific chain/wallet pairs.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/vue/README.md#_snippet_8
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useChainWallet, useWalletManager } from '@interchain-kit/vue';
+
+const junoChainName = ref('juno')
+const keplrWalletName = ref('keplr-extension')
+const juno = useChainWallet(junoChainName, keplrWalletName);
+
+const stargazeChainName = ref('stargaze')
+const leapWalletName = ref('leap-extension')
+const stargaze = useChainWallet(stargazeChainName, leapWalletName);
+
+const walletManager = useWalletManager()
+	
+const connectKeplr = async() => {
+  await walletManager.connect('keplr-extension')
+}
+const connectLeap = async() => {
+  await walletManager.connect('leap-extension')
+}
+</script>
+
+<template>
+  <div>
+    <button @click="connectKeplr">connect keplr</button>
+    <button @click="connectLeap">connect leap</button>
+    <div>juno address: {{ juno.address }}</div>
+    <div>stargaze address: {{ stargaze.address }}</div>
+  </div>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: Setting up ChainProvider with All Mainnet Chains
+DESCRIPTION: This Vue component snippet shows an alternative setup for the `ChainProvider`, importing all mainnet chains and asset lists directly from `@chain-registry/v2/mainnet`. This simplifies configuration if you need access to the entire mainnet registry.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/vue/README.md#_snippet_4
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ChainProvider } from '@interchain-kit/vue';
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { chains, assetLists } from '@chain-registry/v2/mainnet';
+import Show from './views/show.vue';
+</script>
+
+<template>
+  <ChainProvider
+    :wallets="[keplrWallet]"
+    :chains="[chains]"
+    :asset-lists="[assetLists]"
+    :signer-options="{}"
+    :endpoint-options="{}"
+  >
+    <show />
+  </ChainProvider>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: Setting up ChainProvider with All Mainnet Chains (Vue)
+DESCRIPTION: This Vue SFC illustrates an alternative ChainProvider setup where all mainnet chains and asset lists are imported from @chain-registry/v2. This approach is simpler if your application needs access to the full mainnet registry.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_3
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ChainProvider } from '@interchain-kit/vue';
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { chains, assetLists } from '@chain-registry/v2/mainnet';
+import Show from './views/show.vue';
+</script>
+
+<template>
+  <ChainProvider
+    :wallets="[keplrWallet]"
+    :chains="[chains]"
+    :asset-lists="[assetLists]"
+    :signer-options="{}"
+    :endpoint-options="{}"
+  >
+    <show />
+  </ChainProvider>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: Setting up ChainProvider with Specific Chains
+DESCRIPTION: This Vue component snippet demonstrates setting up the `ChainProvider` with specific chains and asset lists imported individually from `@chain-registry/v2`. It requires explicitly listing the desired chains, asset lists, and available wallets.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/vue/README.md#_snippet_3
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ChainProvider } from '@interchain-kit/vue'
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { leapWallet } from '@interchain-kit/leap-extension';
+import { RouterView } from 'vue-router';
+import { chain as junoChain, assetList as junoAssetList } from "@chain-registry/v2/mainnet/juno";
+import { chain as osmosisChain,assetList as osmosisAssetList } from "@chain-registry/v2/mainnet/osmosis";
+import { chain as cosmoshubChain, assetList as cosmoshubAssetList } from "@chain-registry/v2/mainnet/cosmoshub";
+import { chain as osmosisTestChain, assetList as osmosisTestAssetList } from "@chain-registry/v2/testnet/osmosistestnet"
+</script>
+
+<template>
+  <ChainProvider
+    :wallets="[keplrWallet, leapWallet]"
+    :chains="[osmosisChain, junoChain, cosmoshubChain, osmosisTestChain]"
+    :asset-lists="[osmosisAssetList, junoAssetList, cosmoshubAssetList, osmosisTestAssetList]"
+    :signer-options="{}"
+    :endpoint-options="{}"
+  >
+    <router-view />
+  </ChainProvider>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: Setting up ChainProvider with Specific Chains (Vue)
+DESCRIPTION: This Vue SFC demonstrates how to set up the ChainProvider component by explicitly importing and providing specific chain and asset list data from @chain-registry/v2, along with wallet connectors. It is suitable for applications needing to support a predefined set of chains.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_2
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ChainProvider } from '@interchain-kit/vue'
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { leapWallet } from '@interchain-kit/leap-extension';
+import { RouterView } from 'vue-router';
+import { chain as junoChain, assetList as junoAssetList } from "@chain-registry/v2/mainnet/juno";
+import { chain as osmosisChain,assetList as osmosisAssetList } from "@chain-registry/v2/mainnet/osmosis";
+import { chain as cosmoshubChain, assetList as cosmoshubAssetList } from "@chain-registry/v2/mainnet/cosmoshub";
+import { chain as osmosisTestChain, assetList as osmosisTestAssetList } from "@chain-registry/v2/testnet/osmosistestnet"
+</script>
+
+<template>
+  <ChainProvider
+    :wallets="[keplrWallet, leapWallet]"
+    :chains="[osmosisChain, junoChain, cosmoshubChain, osmosisTestChain]"
+    :asset-lists="[osmosisAssetList, junoAssetList, cosmoshubAssetList, osmosisTestAssetList]"
+    :signer-options="{}"
+    :endpoint-options="{}"
+  >
+    <router-view />
+  </ChainProvider>
+</template>
+
+<style scoped>
+</style>
+```
+
+----------------------------------------
+
+TITLE: Setting up ChainProvider for useChainWallet (Vue)
+DESCRIPTION: This Vue SFC shows how to set up the ChainProvider by filtering the mainnet chain and asset lists to include only specific chains needed for the useChainWallet example. This is a prerequisite for using the useChainWallet hook with a limited set of chains.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_5
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ChainProvider } from '@interchain-kit/vue'
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { leapWallet } from '@interchain-kit/leap-extension';
+import Show from './views/show.vue';
+import { chains, assetLists } from '@chain-registry/v2/mainnet';
+
+const chainNames = ['juno', 'stargaze']
+</script>
+
+<template>
+  <ChainProvider
+    :wallets="[keplrWallet, leapWallet]"
+    :chains="chains.filter(c => chainNames.includes(c.chainName))"
+    :asset-lists="assetLists.filter(c => chainNames.includes(c.chainName))"
+    :signer-options="{}"
+    :endpoint-options="{}"
+  >
+    <show />
+  </ChainProvider>
+</template>
+
+<style scoped>
+</style>
+
+
+```
+
+----------------------------------------
+
+TITLE: ChainProvider Setup for useChainWallet Example
+DESCRIPTION: This Vue component snippet configures the `ChainProvider` specifically for demonstrating the `useChainWallet` hook. It filters the available chains and asset lists to include only 'juno' and 'stargaze', and includes Keplr and Leap wallets.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/vue/README.md#_snippet_7
+
+LANGUAGE: vue
+CODE:
+```
+<script setup lang="ts">
+import { ChainProvider } from '@interchain-kit/vue'
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { leapWallet } from '@interchain-kit/leap-extension';
+import Show from './views/show.vue';
+import { chains, assetLists } from '@chain-registry/v2/mainnet';
+
+const chainNames = ['juno', 'stargaze']
+</script>
+
+<template>
+  <ChainProvider
+    :wallets="[keplrWallet, leapWallet]"
+    :chains="chains.filter(c => chainNames.includes(c.chainName))"
+    :asset-lists="assetLists.filter(c => chainNames.includes(c.chainName))"
+    :signer-options="{}"
+    :endpoint-options="{}"
+  >
+    <show />
+  </ChainProvider>
+</template>
+
+<style scoped>
+</style>
+
+```
+
+----------------------------------------
+
+TITLE: Importing Interchain UI Stylesheet in main.ts
+DESCRIPTION: This TypeScript snippet shows how to import the required stylesheet for `@interchain-ui/vue` components in your application's main entry file (e.g., `main.ts`). This ensures the components are styled correctly.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/vue/README.md#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import "@interchain-ui/vue/style.css";
+```
+
+----------------------------------------
+
+TITLE: Using useOfflineSigner Hook (JavaScript)
+DESCRIPTION: This snippet shows how to use the useOfflineSigner hook to get the offline signer object for a specific chain and wallet. The offline signer is used for signing transactions without needing a direct connection to the wallet extension's signing API.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_9
+
+LANGUAGE: js
+CODE:
+```
+const offlineSigner = useOfflineSigner('cosmoshub', 'keplr-extension')
+
+console.log(offlineSigner) // cosmoshub offlineSigner in keplr-extension wallet 
+
+```
+
+TITLE: Using useAccount Hook (JavaScript)
+DESCRIPTION: This snippet demonstrates using the useAccount hook to retrieve the specific account details (like address) for a given chain and wallet combination. It requires the chain name and wallet name as arguments.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_8
+
+LANGUAGE: js
+CODE:
+```
+const account = useAccount('cosmoshub', 'keplr-extension')
+
+console.log(account.address) // cosmoshub address in keplr-extension wallet
+
+```
+
+----------------------------------------
+
+TITLE: Using useCurrentWallet Hook (JavaScript)
+DESCRIPTION: This snippet shows how to use the useCurrentWallet hook to access information about the wallet currently connected by the user. It returns the wallet object or null if no wallet is connected.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/examples/vue/README.md#_snippet_7
+
+LANGUAGE: js
+CODE:
+```
+const wallet = useCurrentWallet()
+
+console.log(wallet) // current connected wallet
+
+```

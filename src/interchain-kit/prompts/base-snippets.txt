@@ -1,0 +1,117 @@
+TITLE: Signing and Sending Transactions with WalletManager TypeScript
+DESCRIPTION: This example illustrates how to get a signing client from the WalletManager and use it to sign and broadcast a bank send transaction. It fetches account and signing client details, constructs a send message and fee, and then uses `interchainjs`'s `createSend` function to initiate the transaction signing process via the connected wallet. Requires `@interchain-kit/core`, `@chain-registry` data, a wallet connector, and `interchainjs`.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/core/README.md#_snippet_3
+
+LANGUAGE: typescript
+CODE:
+```
+import { chain as osmosisChain, assetList as osmosisAssetList } from '@chain-registry/v2/mainnet/osmosis';
+import { WalletManager } from '@interchain-kit/core';
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { createSend } from "interchainjs/cosmos/bank/v1beta1/tx.rpc.func";
+
+const walletManager = await WalletManager.create(
+  [osmosisChain],
+  [osmosisAssetList],
+  [keplrWallet])
+
+const signingClient = await walletManager.getSigningClient(keplrWallet.info?.name as string, osmosisChain.chainName)
+const account = await walletManager.getAccount(keplrWallet.info?.name as string, osmosisChain.chainName)
+const txSend = createSend(signingClient);
+
+const denom = osmosisChain.staking?.stakingTokens[0].denom as string
+
+const fromAddress = account.address
+
+const fee = {
+  amount: [{
+    denom,
+    amount: '25000'
+  }],
+  gas: "1000000",
+};
+
+const message = {
+  fromAddress: fromAddress,
+  toAddress: 'osmo10m5gpakfe95t5k86q5fhqe03wuev7g3ac2lvcu',
+  amount: [
+    {
+      denom,
+      amount: '1'
+    },
+  ],
+}
+
+const memo = "test"
+
+await txSend(
+  fromAddress,
+  message,
+  fee,
+  memo
+)
+
+// pop up confirm modal from wallet to start signing process
+```
+
+----------------------------------------
+
+TITLE: Querying Account Balance with WalletManager TypeScript
+DESCRIPTION: This snippet demonstrates querying the balance of a specific staking token for a connected account on a chain (Osmosis). It uses the WalletManager to get the RPC endpoint and account, then utilizes `interchainjs`'s `createGetBalance` function. Requires `@interchain-kit/core`, `@chain-registry` data, a wallet connector, and `interchainjs`.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/core/README.md#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { chain as osmosisChain, assetList as osmosisAssetList } from '@chain-registry/v2/mainnet/osmosis';
+import { WalletManager } from '@interchain-kit/core';
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { createGetBalance } from "interchainjs/cosmos/bank/v1beta1/query.rpc.func";
+
+const walletManager = await WalletManager.create(
+    [osmosisChain],
+    [osmosisAssetList],
+    [keplrWallet])
+
+const account = await walletManager.getAccount(keplrWallet.info?.name as string, osmosisChain.chainName)
+const osmosisRpcEndpoint = await walletManager.getRpcEndpoint(keplrWallet.info?.name as string, osmosisChain.chainName)
+
+const balanceQuery = createGetBalance(osmosisRpcEndpoint as string);
+const { balance } = await balanceQuery({
+    address: account.address,
+    denom: osmosisChain.staking?.stakingTokens[0].denom as string,
+});
+
+console.log(balance)
+
+/**
+ * { amount: '26589633', denom: 'uosmo' }
+ */
+```
+
+----------------------------------------
+
+TITLE: Retrieving Account Details with WalletManager JavaScript
+DESCRIPTION: This code shows how to initialize the WalletManager and then fetch account details (like address) for a specific chain (Osmosis, Cosmoshub) using a connected wallet (Keplr). It depends on `@interchain-kit/core`, `@chain-registry` data, and a wallet connector.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/core/README.md#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+import osmosis from '@chain-registry/v2/mainnet/osmosis';
+import cosmoshub from '@chain-registry/v2/mainnet/cosmoshub'
+import { WalletManager } from '@interchain-kit/core';
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+
+const walletManager = await WalletManager.create(
+    [osmosis.chain, cosmoshub.chain],
+    [osmosis.assetList, cosmoshub.assetList],
+    [keplrWallet])
+
+// return account of osmosis chain from keplr wallet extension
+const account = await walletManager.getAccount(keplrWallet.info?.name as string, osmosis.chain.chainName)
+console.log(account)
+// return account of cosmoshub chain from keplr wallet extension
+const account2 = await walletManager.getAccount(keplrWallet.info?.name as string, cosmoshub.chain.chainName)
+console.log(account2)
+```
