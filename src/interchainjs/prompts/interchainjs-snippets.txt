@@ -1,0 +1,2306 @@
+TITLE: Wallet Generation and Transaction Signing with InterchainJS
+DESCRIPTION: Comprehensive example showing wallet generation, authentication setup, and transaction signing using InterchainJS DirectSigner.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+// Import wallet and HD path utilities from the SDK packages
+import { Secp256k1Auth } from '@interchainjs/auth/secp256k1';
+import { HDPath } from '@interchainjs/types';
+// Import the DirectSigner from our SDK
+import { DirectSigner } from '@interchainjs/cosmos/signers/direct';
+import { Bip39, Random } from '@interchainjs/crypto';
+import { toEncoders } from '@interchainjs/cosmos/utils';
+import { MsgSend } from 'interchainjs/cosmos/bank/v1beta1/tx';
+
+(async () => {
+// Generate a mnemonic using the SDK utility
+const mnemonic = Bip39.encode(Random.getBytes(16)).toString();
+
+// Derive authentication objects (wallet accounts) using the SDK's Secp256k1Auth
+// Here we derive the first account using the standard Cosmos HD path.
+const [auth] = Secp256k1Auth.fromMnemonic(mnemonic, [
+HDPath.cosmos(0, 0, 0).toString(),
+]);
+
+// Prepare any encoders required for your message types
+const encoders:Encoder[] = toEncoders(MsgSend);
+
+// Define your RPC endpoint (ensure it points to a working Cosmos RPC node)
+const rpcEndpoint = 'http://your-rpc-endpoint:26657';
+
+// Create a DirectSigner instance using the auth object and your RPC endpoint.
+// The options object can include chain-specific settings (like the bech32 prefix).
+const signer = new DirectSigner(auth, encoders, rpcEndpoint, {
+prefix: 'cosmos', // Replace with your chain's prefix if different
+});
+
+// Retrieve the wallet address from the signer
+const address = await signer.getAddress();
+console.log('Wallet address:', address);
+
+// ----- Transaction Example -----
+// Build your transaction message (e.g., a bank MsgSend). Refer to interchainjs for details.
+const msg = {
+// Example message object; adjust fields according to your chain and message type
+// For instance, if using bank.MsgSend, you would populate:
+typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+value: { fromAddress: address, toAddress: address, amount: [{ denom: 'uatom', amount: '1' }] }
+};
+
+// Sign and broadcast the transaction.
+// The signAndBroadcast method handles building the transaction and sending it over RPC.
+const result = await signer.signAndBroadcast([msg]);
+console.log('Transaction hash:', result.hash);
+})();
+
+---
+
+TITLE: Direct Signer Implementation with Wallet
+DESCRIPTION: Example of implementing DirectSigner using Secp256k1HDWallet with a mnemonic and cosmos configuration
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#2025-04-17_snippet_2
+
+LANGUAGE: typescript
+CODE:
+import { DirectSigner } from "@interchainjs/cosmos/signers/direct";
+import { DirectWallet, SignDoc } from "@interchainjs/cosmos/types";
+import { toEncoder } from "@interchainjs/cosmos/utils";
+import { MsgSend } from "interchainjs/cosmos/bank/v1beta1/tx";
+import { HDPath } from "@interchainjs/types";
+
+const directWallet = Secp256k1HDWallet.fromMnemonic("<MNEMONIC_WORDS>", [
+{
+// bech32_prefix
+prefix: "cosmos",
+// use cosmos hdpath built by HDPath
+// we can get cosmos hdpath "m/44'/118'/0'/0/0" by this:
+hdPath: HDPath.cosmos().toString(),
+},
+]);
+const signer = await DirectSigner.fromWallet(wallet, [toEncoder(MsgSend)], <RPC_ENDPOINT>);
+
+---
+
+TITLE: Broadcasting Messages with SigningClient in JavaScript
+DESCRIPTION: This snippet demonstrates how to create and broadcast a message using the SigningClient in InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_22
+
+LANGUAGE: javascript
+CODE:
+const msg = {
+typeUrl: MsgSend.typeUrl,
+value: MsgSend.fromPartial({
+amount: [
+{
+denom: "uatom",
+amount: "1000",
+},
+],
+toAddress: address,
+fromAddress: address,
+}),
+};
+
+const fee: StdFee = {
+amount: [
+{
+denom: "uatom",
+amount: "1000",
+},
+],
+gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+
+---
+
+TITLE: Using Tree Shakable Helpers for Transactions
+DESCRIPTION: Example demonstrating how to use tree shakable helpers for querying validator info and executing delegation transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_4
+
+LANGUAGE: javascript
+CODE:
+// Import helpers
+import { getValidator } from "@interchainjs/cosmos/staking/v1beta1/query.rpc.func";
+import { delegate } from "@interchainjs/cosmos/staking/v1beta1/tx.rpc.func";
+
+// Query validator info
+const { validator } = await getValidator(endpoint, {
+validatorAddr: "cosmosvaloper1...",
+});
+
+// Execute delegation
+const result = await delegate(
+signingClient,
+signerAddress,
+{
+delegatorAddress: signerAddress,
+validatorAddress: validator.operatorAddress,
+amount: { denom: "uatom", amount: "1000000" },
+},
+fee,
+"Delegation via InterchainJS"
+);
+
+---
+
+TITLE: Initializing SigningClient in JavaScript
+DESCRIPTION: This snippet shows how to initialize a SigningClient using InjectiveJS, connecting with a signer and RPC endpoint.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_25
+
+LANGUAGE: javascript
+CODE:
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+import { defaultSignerOptions } from "@interchainjs/injective/defaults";
+
+const signingClient = await SigningClient.connectWithSigner(
+await getRpcEndpoint(),
+new AminoGenericOfflineSigner(aminoOfflineSigner),
+{
+signerOptions: defaultSignerOptions.Cosmos,
+}
+);
+
+---
+
+TITLE: Querying Blockchain Data with RPC Clients
+DESCRIPTION: Example of using RPC clients to query account balances from Cosmos bank module and Injective exchange module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_1
+
+LANGUAGE: javascript
+CODE:
+import { getAllBalances } from "injectivejs/cosmos/bank/v1beta1/query.rpc.func";
+import { getExchangeBalances } from "injectivejs/injective/exchange/v1beta1/query.rpc.func";
+
+{ getRpcEndpoint } = useChain("injective");
+
+const endpoint = await getRpcEndpoint();
+
+// now you can query the cosmos modules
+const balance = await getAllBalances(endpoint, {
+address: "inj1addresshere",
+});
+
+const exchangeBalance = await getExchangeBalances(endpoint, {});
+
+---
+
+TITLE: Constructing Secp256k1HDWallet from Mnemonic in TypeScript
+DESCRIPTION: This snippet demonstrates how to create a Secp256k1HDWallet instance using a mnemonic phrase and HD paths. It initializes a wallet with two accounts using the Cosmos HD path.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/wallet.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+import { Secp256k1HDWallet } from "@interchainjs/cosmos/wallets/secp256k1hd";
+import { HDPath } from "@interchainjs/types";
+
+// init wallet with two accounts using two hd paths
+const wallet = Secp256k1HDWallet.fromMnemonic(
+"<MNEMONIC_WORDS>",
+// use cosmos hdpath built by HDPath
+// we can get cosmos hdpath "m/44'/118'/0'/0/0" and "m/44'/118'/0'/0/1" by this:
+[0, 1].map((i) => ({
+prefix: "cosmos",
+hdPath: HDPath.cosmos(0, 0, i).toString(),
+}))
+);
+
+---
+
+TITLE: Initializing SigningClient in JavaScript
+DESCRIPTION: This code snippet shows how to initialize a SigningClient using InterchainJS for connecting with wallets and signing messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_21
+
+LANGUAGE: javascript
+CODE:
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+
+const signingClient = await SigningClient.connectWithSigner(
+await getRpcEndpoint(),
+new AminoGenericOfflineSigner(aminoOfflineSigner)
+);
+
+---
+
+TITLE: Querying Blockchain Data with RPC Client
+DESCRIPTION: Example showing how to create and use an RPC client to query balance data from a Cosmos-based blockchain.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_3
+
+LANGUAGE: javascript
+CODE:
+import { getAllBalances } from "@interchainjs/cosmos/bank/v1beta1/query.rpc.func";
+
+{ getRpcEndpoint } = useChain("cosmoshub");
+
+const endpoint = await getRpcEndpoint();
+
+// now you can query the cosmos modules
+const balance = await getAllBalances(endpoint,{
+address: "cosmos1addresshere",
+});
+
+---
+
+TITLE: Importing Circuit Query and Transaction Helpers in JavaScript
+DESCRIPTION: This code snippet illustrates the import of query and transaction helper functions for the Circuit module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_7
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getAccount,
+getAccounts,
+getDisabledList,
+} from "@interchainjs/cosmos/circuit/v1/query.rpc.func";
+
+// tx helpers
+import {
+authorizeCircuitBreaker,
+tripCircuitBreaker,
+resetCircuitBreaker,
+} from "@interchainjs/cosmos/circuit/v1/tx.rpc.func";
+
+---
+
+TITLE: Querying RPC Endpoints
+DESCRIPTION: Example of using RPC clients to query cosmos modules and injective modules for balance information
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_1
+
+LANGUAGE: javascript
+CODE:
+import { getAllBalances } from "injectivejs/cosmos/bank/v1beta1/query.rpc.func";
+import { getExchangeBalances } from "injectivejs/injective/exchange/v1beta1/query.rpc.func";
+
+{ getRpcEndpoint } = useChain("injective");
+
+const endpoint = await getRpcEndpoint();
+
+// now you can query the cosmos modules
+const balance = await getAllBalances(endpoint, {
+address: "inj1addresshere",
+});
+
+// you can also query the injective modules
+const exchangeBalance = await getExchangeBalances(endpoint, {});
+
+---
+
+TITLE: Combined Query and Transaction Example
+DESCRIPTION: Complete example demonstrating how to combine query and transaction helpers for a staking scenario, including validator querying and delegation execution.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-react/README.md#2025-04-17_snippet_4
+
+LANGUAGE: javascript
+CODE:
+// Import helpers
+import { createQueryRpc } from "@interchainjs/cosmos/utils";
+import { getValidator } from "@interchainjs/cosmos/staking/v1beta1/query.rpc.func";
+import { delegate } from "@interchainjs/cosmos/staking/v1beta1/tx.rpc.func";
+
+// Query validator info
+const { validator } = await getValidator(endpoint, {
+validatorAddr: "cosmosvaloper1...",
+});
+
+// Execute delegation
+const result = await delegate(
+signingClient,
+signerAddress,
+{
+delegatorAddress: signerAddress,
+validatorAddress: validator.operatorAddress,
+amount: { denom: "uatom", amount: "1000000" },
+},
+fee,
+"Delegation via InterchainJS"
+);
+
+---
+
+TITLE: Importing Exchange Transaction Helper Functions
+DESCRIPTION: Complete list of transaction helper functions available in the Exchange module for market operations, position management, and more.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_4
+
+LANGUAGE: javascript
+CODE:
+import {
+activateStakeGrant,
+adminUpdateBinaryOptionsMarket,
+authorizeStakeGrants,
+batchCancelBinaryOptionsOrders,
+batchCancelDerivativeOrders,
+batchCancelSpotOrders,
+batchCreateDerivativeLimitOrders,
+batchCreateSpotLimitOrders,
+batchUpdateOrders,
+cancelBinaryOptionsOrder,
+cancelDerivativeOrder,
+cancelSpotOrder,
+createBinaryOptionsLimitOrder,
+createBinaryOptionsMarketOrder,
+createDerivativeLimitOrder,
+createDerivativeMarketOrder,
+createSpotLimitOrder,
+createSpotMarketOrder,
+decreasePositionMargin,
+deposit,
+emergencySettleMarket,
+externalTransfer,
+increasePositionMargin,
+instantBinaryOptionsMarketLaunch,
+instantExpiryFuturesMarketLaunch,
+instantPerpetualMarketLaunch,
+instantSpotMarketLaunch,
+liquidatePosition,
+privilegedExecuteContract,
+rewardsOptOut,
+subaccountTransfer,
+updateDerivativeMarket,
+updateParams,
+updateSpotMarket,
+withdraw,
+} from "injectivejs/injective/exchange/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Importing Query and Transaction Helpers
+DESCRIPTION: Example showing how to import specific query and transaction helper functions for blockchain interactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-react/README.md#2025-04-17_snippet_2
+
+LANGUAGE: javascript
+CODE:
+import { getValidator } from "@interchainjs/cosmos/staking/v1beta1/query.rpc.func";
+import { useGetValidators } from "@interchainjs/react/cosmos/staking/v1beta1/query.rpc.react";
+
+---
+
+TITLE: Importing IBC Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet demonstrates the import of query and transaction helper functions for the IBC module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_20
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getParams,
+getDenomHash,
+getEscrowAddress,
+getTotalEscrowForDenom,
+} from "@interchainjs/ibc/applications/transfer/v1/query.rpc.func";
+
+// tx helpers
+import {
+transfer,
+updateParams,
+} from "@interchainjs/ibc/applications/transfer/v1/tx.rpc.func";
+
+---
+
+TITLE: Combining Query and Transaction Helpers for Staking
+DESCRIPTION: Shows how to combine both query and transaction helpers in a staking scenario. The example demonstrates querying validator information and then executing a delegation transaction.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-vue/README.md#2025-04-17_snippet_2
+
+LANGUAGE: javascript
+CODE:
+// Import helpers
+import { getValidator } from "@interchainjs/cosmos/staking/v1beta1/query.rpc.func";
+import { delegate } from "@interchainjs/cosmos/staking/v1beta1/tx.rpc.func";
+
+// Query validator info
+const { validator } = await getValidator(endpoint, {
+validatorAddr: "cosmosvaloper1...",
+});
+
+// Execute delegation
+const result = await delegate(
+singingClient,
+signerAddress,
+{
+delegatorAddress: signerAddress,
+validatorAddress: validator.operatorAddress,
+amount: { denom: "uatom", amount: "1000000" },
+},
+fee,
+"Delegation via InterchainJS"
+);
+
+---
+
+TITLE: Importing Cosmos Transaction Helper Functions
+DESCRIPTION: Transaction helper functions for Cosmos modules including distribution, bank, staking, and governance to interact with core blockchain functionality.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_11
+
+LANGUAGE: javascript
+CODE:
+import {
+fundCommunityPool,
+communityPoolSpend,
+depositValidatorRewardsPool,
+} from "injectivejs/cosmos/distribution/v1beta1/tx.rpc.func";
+
+import {
+send,
+multiSend,
+} from "injectivejs/cosmos/bank/v1beta1/tx.rpc.func";
+
+import {
+delegate,
+undelegate,
+cancelUnbondingDelegation,
+createValidator,
+} from "injectivejs/cosmos/staking/v1beta1/tx.rpc.func";
+
+import {
+deposit,
+submitProposal,
+vote,
+voteWeighted,
+} from "injectivejs/cosmos/gov/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Using Vue Composable Hooks for Blockchain Queries
+DESCRIPTION: Demonstrates how to use Vue composable hooks for blockchain queries. This example shows fetching a balance with reactive components and configuration options.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-vue/README.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+// Import only what you need
+import { useGetBalance } from '@interchainjs/vue/cosmos/bank/v1beta1/query.rpc.vue';
+
+// Initialize RPC endpoint and address, then you can get balance by tree shakable hooks
+const request = computed(() => ({
+address: address.value,
+denom,
+}));
+
+const {
+data: balance,
+isSuccess: isBalanceLoaded,
+isLoading: isFetchingBalance,
+refetch: refetchBalance
+} = useGetBalance({
+request,
+options: {
+enabled: !!address,
+select: ({ balance }) =>
+new BigNumber(balance?.amount ?? 0).multipliedBy(
+10 \*\* -COIN_DISPLAY_EXPONENT
+),
+},
+clientResolver: rpcEndpoint,
+})
+
+---
+
+TITLE: UniSigner Interface Definition
+DESCRIPTION: Core interface definition for UniSigner showing the main signing methods: signArbitrary, signDoc, and sign
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#2025-04-17_snippet_3
+
+LANGUAGE: typescript
+CODE:
+/\*_ you can import { UniSigner } from "@interchainjs/types" _/
+export interface UniSigner<SignDoc, Tx> {
+...
+signArbitrary(data: Uint8Array): IKey;
+signDoc: (doc: SignDoc) => Promise<SignDocResponse<SignDoc>>;
+sign(
+messages: unknown,
+...args: unknown[]
+): Promise<SignResponse<SignDoc, Tx>>;
+...
+}
+
+---
+
+TITLE: Broadcasting Messages with SigningClient in JavaScript
+DESCRIPTION: This snippet demonstrates how to create and broadcast a message using the SigningClient in InjectiveJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_26
+
+LANGUAGE: javascript
+CODE:
+const msg = {
+typeUrl: MsgSend.typeUrl,
+value: MsgSend.fromPartial({
+amount: [
+{
+denom: "inj",
+amount: "1000",
+},
+],
+toAddress: address,
+fromAddress: address,
+}),
+};
+
+const fee: StdFee = {
+amount: [
+{
+denom: "inj",
+amount: "864",
+},
+],
+gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+
+---
+
+TITLE: Importing Distribution Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet illustrates the import of query and transaction helper functions for the Distribution module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_10
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getParams,
+getValidatorDistributionInfo,
+getValidatorOutstandingRewards,
+getValidatorCommission,
+getValidatorSlashes,
+getDelegationRewards,
+getDelegationTotalRewards,
+} from "@interchainjs/cosmos/distribution/v1beta1/query.rpc.func";
+
+// tx helpers
+import {
+setWithdrawAddress,
+withdrawDelegatorReward,
+withdrawValidatorCommission,
+fundCommunityPool,
+communityPoolSpend,
+updateParams,
+} from "@interchainjs/cosmos/distribution/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Broadcasting Messages with Signing Client
+DESCRIPTION: Demonstrates how to create and broadcast a MsgSend message using the signing client.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#2025-04-17_snippet_4
+
+LANGUAGE: javascript
+CODE:
+const msg = {
+typeUrl: MsgSend.typeUrl,
+value: MsgSend.fromPartial({
+amount: [
+{
+denom: "inj",
+amount: "1000",
+},
+],
+toAddress: address,
+fromAddress: address,
+}),
+};
+
+const fee: StdFee = {
+amount: [
+{
+denom: "inj",
+amount: "864",
+},
+],
+gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+
+---
+
+TITLE: Defining Cosmos Amino Signer Interface in TypeScript
+DESCRIPTION: This snippet defines the CosmosAminoSigner interface using the UniSigner type with specific type parameters for Cosmos Amino signing.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_0
+
+LANGUAGE: typescript
+CODE:
+export type CosmosAminoSigner = UniSigner<
+CosmosSignArgs,
+TxRaw,
+StdSignDoc,
+string,
+BroadcastResponse
+
+> ;
+
+---
+
+TITLE: Initializing SigningClient with InjectiveJS
+DESCRIPTION: Shows how to initialize a SigningClient using InjectiveJS, connecting with a signer and specifying signer options for Injective.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_10
+
+LANGUAGE: javascript
+CODE:
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+import { defaultSignerOptions } from "@interchainjs/injective/defaults";
+
+const signingClient = await SigningClient.connectWithSigner(
+await getRpcEndpoint(),
+new AminoGenericOfflineSigner(aminoOfflineSigner),
+{
+signerOptions: defaultSignerOptions.Cosmos,
+}
+);
+
+---
+
+TITLE: Importing CosmWasm Transaction Helper Functions
+DESCRIPTION: Transaction helper functions for CosmWasm module to deploy and interact with smart contracts on the Injective blockchain.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_9
+
+LANGUAGE: javascript
+CODE:
+import {
+executeContract,
+clearAdmin,
+instantiateContract,
+instantiateContract2,
+migrateContract,
+pinCodes,
+removeCodeUploadParamsAddresses,
+storeAndInstantiateContract,
+storeCode,
+sudoContract,
+unpinCodes,
+updateAdmin,
+updateContractLabel,
+updateInstantiateConfig,
+addCodeUploadParamsAddresses,
+storeAndMigrateContract,
+} from "injectivejs/cosmwasm/wasm/v1/tx.rpc.func";
+
+---
+
+TITLE: Composing Exchange Messages with TypeUrl (Complete List)
+DESCRIPTION: Complete list of typed messages available in the MessageComposer for the Exchange module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_14
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/exchange/v1beta1/tx.registry";
+
+const {
+adminUpdateBinaryOptionsMarket,
+batchCancelBinaryOptionsOrders,
+batchCancelDerivativeOrders,
+batchCancelSpotOrders,
+batchCreateDerivativeLimitOrders,
+batchCreateSpotLimitOrders,
+batchUpdateOrders,
+cancelBinaryOptionsOrder,
+cancelDerivativeOrder,
+cancelSpotOrder,
+createBinaryOptionsLimitOrder,
+createBinaryOptionsMarketOrder,
+createDerivativeLimitOrder,
+createDerivativeMarketOrder,
+createSpotLimitOrder,
+createSpotMarketOrder,
+deposit,
+exec,
+externalTransfer,
+increasePositionMargin,
+instantBinaryOptionsMarketLaunch,
+instantExpiryFuturesMarketLaunch,
+instantPerpetualMarketLaunch,
+instantSpotMarketLaunch,
+liquidatePosition,
+rewardsOptOut,
+subaccountTransfer,
+withdraw,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Importing Authz Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet demonstrates how to import query and transaction helper functions for the Authz module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_5
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getGrants,
+getGranterGrants,
+getGranteeGrants,
+} from "@interchainjs/cosmos/authz/v1beta1/query.rpc.func";
+
+// tx helpers
+import {
+grant,
+revoke,
+exec,
+} from "@interchainjs/cosmos/authz/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Broadcasting Messages with InjectiveJS
+DESCRIPTION: Demonstrates how to create and broadcast a message using InjectiveJS, including setting up the message, specifying fees, and handling the response.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_11
+
+LANGUAGE: javascript
+CODE:
+const msg = {
+typeUrl: MsgSend.typeUrl,
+value: MsgSend.fromPartial({
+amount: [
+{
+denom: "inj",
+amount: "1000",
+},
+],
+toAddress: address,
+fromAddress: address,
+}),
+};
+
+const fee: StdFee = {
+amount: [
+{
+denom: "inj",
+amount: "864",
+},
+],
+gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+
+---
+
+TITLE: Using Tree-Shakable Query Helper Functions
+DESCRIPTION: Example of importing and using a tree-shakable query helper function to get blockchain balances. Demonstrates bundle size optimization through selective importing.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-react/README.md#2025-04-17_snippet_0
+
+LANGUAGE: javascript
+CODE:
+// Import only what you need
+import { getAllBalances } from "@interchainjs/cosmos/bank/v1beta1/query.rpc.func";
+
+// Now you can query the blockchain
+const balance = await getAllBalances(endpoint, {
+address: "cosmos1addresshere",
+});
+
+---
+
+TITLE: Importing Cosmos Distribution Messages in JavaScript
+DESCRIPTION: This snippet demonstrates how to import and destructure message composers for Cosmos distribution operations using InjectiveJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_21
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/distribution/v1beta1/tx.registry";
+
+const {
+fundCommunityPool,
+setWithdrawAddress,
+withdrawDelegatorReward,
+withdrawValidatorCommission,
+} = MessageComposer.fromPartial;
+
+---
+
+TITLE: Importing NFT Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet illustrates the import of query and transaction helper functions for the NFT module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_16
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getBalance,
+getOwner,
+getClass,
+getClasses,
+getNFTs,
+getNFT,
+} from "@interchainjs/cosmos/nft/v1/query.rpc.func";
+
+// tx helpers
+import { send } from "@interchainjs/cosmos/nft/v1/tx.rpc.func";
+
+---
+
+TITLE: Direct Signer Transaction Example
+DESCRIPTION: Example of using DirectSigner to sign and broadcast transactions with fee and memo information.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_2
+
+LANGUAGE: typescript
+CODE:
+import { DirectSigner } from '@interchainjs/cosmos/signers/direct';
+// (Wallet generation code as shown above is assumed to have been run)
+
+// Build your transaction message (e.g., a bank message)
+const msg = {
+// Construct your message based on the schema from interchainjs
+};
+
+// Optionally, set fee and memo information
+const fee = {
+amount: [
+{
+denom: 'uatom',
+amount: '5000',
+},
+],
+gas: '200000',
+};
+
+// Sign and broadcast the transaction
+const result = await signer.signAndBroadcast([msg], {
+fee,
+memo: 'migration transaction test',
+});
+console.log('Transaction hash:', result.hash);
+
+---
+
+TITLE: Importing Transaction Helpers
+DESCRIPTION: Example of importing transaction helper functions for broadcasting blockchain transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-react/README.md#2025-04-17_snippet_3
+
+LANGUAGE: javascript
+CODE:
+import { delegate } from "@interchainjs/cosmos/staking/v1beta1/tx.rpc.func";
+import { useDelegate } from "@interchainjs/react/cosmos/staking/v1beta1/tx.rpc.react";
+
+---
+
+TITLE: Importing Staking Query and Transaction Helpers in JavaScript
+DESCRIPTION: This code snippet demonstrates the import of query and transaction helper functions for the Staking module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_17
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getValidators,
+getValidator,
+getValidatorDelegations,
+getValidatorUnbondingDelegations,
+getDelegation,
+getUnbondingDelegation,
+} from "@interchainjs/cosmos/staking/v1beta1/query.rpc.func";
+
+// tx helpers
+import {
+createValidator,
+editValidator,
+delegate,
+undelegate,
+redelegate,
+} from "@interchainjs/cosmos/staking/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Importing Peggy Messages from InjectiveJS
+DESCRIPTION: Demonstrates how to import and destructure Peggy-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_3
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/peggy/v1/tx.registry";
+
+const {
+cancelSendToEth,
+confirmBatch,
+depositClaim,
+eRC20DeployedClaim,
+requestBatch,
+sendToEth,
+setOrchestratorAddresses,
+submitBadSignatureEvidence,
+valsetConfirm,
+valsetUpdateClaim,
+withdrawClaim,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Advanced SigningClient Configuration in JavaScript
+DESCRIPTION: This snippet shows advanced configuration for manually constructing a SigningClient with custom proto registry and amino converters.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_27
+
+LANGUAGE: javascript
+CODE:
+import {
+cosmosAminoConverters,
+cosmosProtoRegistry,
+cosmwasmAminoConverters,
+cosmwasmProtoRegistry,
+ibcProtoRegistry,
+ibcAminoConverters,
+injectiveAminoConverters,
+injectiveProtoRegistry
+} from 'injectivejs';
+
+const signer: OfflineSigner = /_ create your signer (see above) _/
+const rpcEndpoint = 'https://rpc.cosmos.directory/injective'; // or another URL
+
+const protoRegistry: ReadonlyArray<[string, GeneratedType]> = [
+...cosmosProtoRegistry,
+...cosmwasmProtoRegistry,
+...ibcProtoRegistry,
+...injectiveProtoRegistry
+];
+
+const aminoConverters = {
+...cosmosAminoConverters,
+...cosmwasmAminoConverters,
+...ibcAminoConverters,
+...injectiveAminoConverters
+};
+
+const registry = new Registry(protoRegistry);
+const aminoTypes = new AminoTypes(aminoConverters);
+
+const signingClient = await SigningClient.connectWithSigner(rpcEndpoint, signer);
+
+signingClient.addEncoders(registry);
+signingClient.addConverters(aminoTypes);
+
+---
+
+TITLE: Importing Cosmos Bank Messages in JavaScript
+DESCRIPTION: This snippet shows how to import and destructure message composers for Cosmos bank operations using InjectiveJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_22
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/bank/v1beta1/tx.registry";
+
+const { multiSend, send } = MessageComposer.fromPartial;
+
+---
+
+TITLE: Composing IBC Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the IBC module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_20
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/ibc/applications/transfer/v1/tx.registry";
+
+const { transfer } = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Importing IBC Messages from InjectiveJS
+DESCRIPTION: Illustrates how to import and destructure IBC-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_5
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/ibc/applications/transfer/v1/tx.registry";
+
+const { transfer } = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Advanced SigningClient Setup with InjectiveJS
+DESCRIPTION: Illustrates an advanced setup for manually constructing a SigningClient with InjectiveJS, including registry and converter configurations.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_12
+
+LANGUAGE: javascript
+CODE:
+import {
+cosmosAminoConverters,
+cosmosProtoRegistry,
+cosmwasmAminoConverters,
+cosmwasmProtoRegistry,
+ibcProtoRegistry,
+ibcAminoConverters,
+injectiveAminoConverters,
+injectiveProtoRegistry
+} from 'injectivejs';
+
+const signer: OfflineSigner = /_ create your signer (see above) _/
+const rpcEndpoint = 'https://rpc.cosmos.directory/injective'; // or another URL
+
+const protoRegistry: ReadonlyArray<[string, GeneratedType]> = [
+...cosmosProtoRegistry,
+...cosmwasmProtoRegistry,
+...ibcProtoRegistry,
+...injectiveProtoRegistry
+];
+
+const aminoConverters = {
+...cosmosAminoConverters,
+...cosmwasmAminoConverters,
+...ibcAminoConverters,
+...injectiveAminoConverters
+};
+
+const registry = new Registry(protoRegistry);
+const aminoTypes = new AminoTypes(aminoConverters);
+
+const signingClient = await SigningClient.connectWithSigner(rpcEndpoint, signer);
+
+signingClient.addEncoders(registry);
+signingClient.addConverters(aminoTypes);
+
+---
+
+TITLE: Using SignerFromBrowser for Ethereum Transactions
+DESCRIPTION: Example of using SignerFromBrowser to send an Ethereum transaction in a browser environment. It demonstrates how to create a signer, send a transaction, and wait for the receipt.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+import { SignerFromBrowser } from "@interchainjs/ethereum/signers/SignerFromBrowser"
+const signer = new SignerFromBrowser(window.ethereum)
+const tx = await signer.send({
+to: recipientAddress,
+value: BigInt(10\*\*18),
+})
+const receipt = await tx.wait()
+
+---
+
+TITLE: Initializing Signing Client with Signer Options
+DESCRIPTION: Creates a SigningClient using ConnectWithSigner and default signer options for Cosmos.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#2025-04-17_snippet_3
+
+LANGUAGE: javascript
+CODE:
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+import { defaultSignerOptions } from "@interchainjs/injective/defaults";
+
+const signingClient = await SigningClient.connectWithSigner(
+await getRpcEndpoint(),
+new AminoGenericOfflineSigner(aminoOfflineSigner),
+{
+signerOptions: defaultSignerOptions.Cosmos,
+}
+);
+
+---
+
+TITLE: Class Diagram for Wallet Implementation in Mermaid
+DESCRIPTION: A class diagram showing the relationships between ICosmosWallet, OfflineDirectSigner, OfflineAminoSigner, and Secp256k1HDWallet. It illustrates the inheritance and implementation relationships between these classes and interfaces.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/wallet.md#2025-04-17_snippet_0
+
+LANGUAGE: mermaid
+CODE:
+classDiagram
+class ICosmosWallet {
++getAccounts() Promise~AccountData[]~
+}
+
+    class OfflineDirectSigner {
+        +getAccounts() Promise~AccountData[]~
+        +signDirect(signerAddress: string, signDoc: CosmosDirectDoc) Promise~DirectSignResponse~
+    }
+
+    class OfflineAminoSigner {
+        +getAccounts() Promise~AccountData[]~
+        +signAmino(signerAddress: string, signDoc: CosmosAminoDoc) Promise~AminoSignResponse~
+    }
+
+    class Secp256k1HDWallet {
+        +accounts: ICosmosAccount[]
+        +options: SignerConfig
+        +getAccounts() Promise~AccountData[]~
+        +signDirect(signerAddress: string, signDoc: CosmosDirectDoc) Promise~DirectSignResponse~
+        +signAmino(signerAddress: string, signDoc: CosmosAminoDoc) Promise~AminoSignResponse~
+        +toOfflineDirectSigner() OfflineDirectSigner
+        +toOfflineAminoSigner() OfflineAminoSigner
+        +fromMnemonic(mnemonic: string, derivations: AddrDerivation[], options?: WalletOptions) Secp256k1HDWallet
+        -getAcctFromBech32Addr(address: string) ICosmosAccount
+    }
+
+    OfflineDirectSigner <|.. Secp256k1HDWallet
+    OfflineAminoSigner <|.. Secp256k1HDWallet
+    ICosmosWallet <|.. Secp256k1HDWallet
+
+    style OfflineDirectSigner fill:#f9f,stroke:#333,stroke-width:2px
+    style OfflineAminoSigner fill:#f9f,stroke:#333,stroke-width:2px
+    style ICosmosWallet fill:#f9f,stroke:#333,stroke-width:2px
+
+---
+
+TITLE: Using Custom React Query Hooks
+DESCRIPTION: Implementation of a custom React hook for querying balance information. Shows integration with react-query context and demonstrates conditional query execution.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-react/README.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+// Import only what you need
+import { defaultContext } from "@tanstack/react-query";
+import { useGetBalance } from "@interchainjs/react/cosmos/bank/v1beta1/query.rpc.react";
+
+// Initialize RPC endpoint and address
+const { rpcEndpoint } =
+useQueryHooks(defaultChainName, {
+context: defaultContext,
+enabled: !!address,
+});
+
+//Now you can get balance by tree shakable hooks
+const balanceRes = useGetBalance({
+request: {
+address: address || '',
+denom: 'osmo',
+},
+options: {
+context: defaultContext,
+enabled: !!address && !!rpcEndpoint,
+select: ({ balance }) => balance?.amount,
+staleTime: 0,
+},
+clientResolver: rpcEndpoint,
+})
+
+const balance = balanceRes?.data
+
+---
+
+TITLE: Initializing RPC Query Client in JavaScript
+DESCRIPTION: Creates an RPC query client for interacting with Cosmos and Injective modules. Demonstrates querying balance information.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#2025-04-17_snippet_1
+
+LANGUAGE: javascript
+CODE:
+import { injective } from "injective-vue";
+
+const { createRPCQueryClient } = injective.ClientFactory;
+const client = await createRPCQueryClient({ rpcEndpoint: RPC_ENDPOINT });
+
+// now you can query the cosmos modules
+const balance = await client.cosmos.bank.v1beta1.allBalances({
+address: "inj1addresshere",
+});
+
+// you can also query the injective modules
+const balances = await client.injective.exchange.v1beta1.exchangeBalances();
+
+---
+
+TITLE: Importing Cosmos Governance Messages from InjectiveJS
+DESCRIPTION: Demonstrates how to import and destructure Cosmos Governance-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_9
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/gov/v1beta1/tx.registry";
+
+const { deposit, submitProposal, vote, voteWeighted } =
+cosmos.gov.v1beta1.MessageComposer.fromPartial;
+
+---
+
+TITLE: Implementing Amino Signer Class in TypeScript
+DESCRIPTION: This snippet implements the AminoSigner class, which extends AminoSignerBase and implements the CosmosAminoSigner interface. It includes methods for creating signers from wallets and handling transaction signing.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_4
+
+LANGUAGE: typescript
+CODE:
+export class AminoSigner
+extends AminoSignerBase<CosmosAminoDoc>
+implements CosmosAminoSigner
+{
+constructor(
+auth: Auth,
+encoders: Encoder[],
+converters: AminoConverter[],
+endpoint?: string | HttpEndpoint,
+options?: SignerOptions
+) {
+super(auth, encoders, converters, endpoint, options);
+}
+
+getTxBuilder(): BaseCosmosTxBuilder<CosmosAminoDoc> {
+return new AminoTxBuilder(new BaseCosmosTxBuilderContext(this));
+}
+
+async getAccount() {
+// Implementation details...
+}
+
+static async fromWallet(
+signer: OfflineAminoSigner | IAminoGenericOfflineSigner,
+encoders: Encoder[],
+converters: AminoConverter[],
+endpoint?: string | HttpEndpoint,
+options?: SignerOptions
+) {
+// Implementation details...
+}
+
+static async fromWalletToSigners(
+signer: OfflineAminoSigner | IAminoGenericOfflineSigner,
+encoders: Encoder[],
+converters: AminoConverter[],
+endpoint?: string | HttpEndpoint,
+options?: SignerOptions
+) {
+// Implementation details...
+}
+}
+
+---
+
+TITLE: Direct Signing Implementation Example
+DESCRIPTION: Example showing how to use DirectSigner for signing and broadcasting messages on Injective blockchain. Demonstrates importing signer, initializing with auth, encoders and RPC endpoint, and broadcasting messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/injective/README.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+// import \* from "@interchainjs/injective"; // Error: use sub-imports, to ensure small app size
+import { DirectSigner } from "@interchainjs/injective/signers/direct";
+
+const signer = new DirectSigner(<AUTH>, <ENCODER>[], <RPC_ENDPOINT>); // **ONLY** rpc endpoint is supported for now
+const result = await signer.signAndBroadcast(<MESSAGE>[]);
+console.log(result.hash); // the hash of TxRaw
+
+---
+
+TITLE: Importing CosmWasm Messages from InjectiveJS
+DESCRIPTION: Shows how to import and destructure CosmWasm-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_4
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmwasm/wasm/v1/tx.registry";
+
+const {
+clearAdmin,
+executeContract,
+instantiateContract,
+migrateContract,
+storeCode,
+updateAdmin,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: CosmJS Legacy Transaction Signing
+DESCRIPTION: Example of the old CosmJS transaction signing and broadcasting approach.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_6
+
+LANGUAGE: typescript
+CODE:
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { SigningStargateClient } from "@cosmjs/stargate";
+import { makeCosmoshubPath } from "@cosmjs/crypto";
+
+(async () => {
+const mnemonic = "your mnemonic here";
+const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+hdPaths: [makeCosmoshubPath(0)],
+});
+const [account] = await wallet.getAccounts();
+const rpcEndpoint = 'http://your-rpc-endpoint:26657';
+const client = await SigningStargateClient.connectWithSigner(rpcEndpoint, wallet);
+
+const msg = {
+// Construct your message here
+};
+const fee = {
+amount: [{ denom: 'uatom', amount: '5000' }],
+gas: '200000',
+};
+const memo = "CosmJS transaction test";
+
+const result = await client.signAndBroadcast(account.address, [msg], fee, memo);
+console.log("Transaction hash:", result.transactionHash);
+})();
+
+---
+
+TITLE: Importing CosmWasm Query and Transaction Helpers in JavaScript
+DESCRIPTION: This code snippet illustrates the import of query and transaction helper functions for the CosmWasm module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_19
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getContractInfo,
+getContractHistory,
+getContractsByCode,
+getAllContractState,
+getRawContractState,
+getSmartContractState,
+getCode,
+getCodes,
+} from "@interchainjs/cosmwasm/wasm/v1/query.rpc.func";
+
+// tx helpers
+import {
+storeCode,
+instantiateContract,
+migrateContract,
+updateAdmin,
+clearAdmin,
+} from "@interchainjs/cosmwasm/wasm/v1/tx.rpc.func";
+
+---
+
+TITLE: Direct Signer Implementation with Auth
+DESCRIPTION: Example of implementing DirectSigner using Secp256k1Auth with a mnemonic and cosmos HDPath
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+import { DirectSigner } from "@interchainjs/cosmos/signers/direct";
+import { toEncoder } from "@interchainjs/cosmos/utils";
+import { Secp256k1Auth } from "@interchainjs/auth/secp256k1";
+import { MsgSend } from "interchainjs/cosmos/bank/v1beta1/tx";
+import {
+HDPath
+} from '@interchainjs/types';
+
+const [auth] = Secp256k1Auth.fromMnemonic("<MNEMONIC_WORDS>", [
+// use cosmos hdpath built by HDPath
+// we can get cosmos hdpath "m/44'/118'/0'/0/0" by this:
+HDPath.cosmos().toString(),
+]);
+const signer = new DirectSigner(auth, [toEncoder(MsgSend)], <RPC_ENDPOINT>);
+
+---
+
+TITLE: Importing Auction Transaction Helper Functions
+DESCRIPTION: Example of importing the bid transaction helper function from the Auction module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_3
+
+LANGUAGE: javascript
+CODE:
+import { bid } from "injectivejs/injective/auction/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Importing Bank Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet shows the import statements for query and transaction helper functions related to the Bank module in InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_6
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getAllBalances,
+getDenomMetadata,
+getSupply,
+getParams,
+} from "@interchainjs/cosmos/bank/v1beta1/query.rpc.func";
+
+// tx helpers
+import {
+send,
+multiSend,
+} from "@interchainjs/cosmos/bank/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Amino Signer Implementation
+DESCRIPTION: Example of using AminoSigner for legacy compatibility, showing setup and transaction broadcasting.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_3
+
+LANGUAGE: typescript
+CODE:
+import { AminoSigner } from '@interchainjs/cosmos/signers/amino';
+import { toEncoders, toConverters } from '@interchainjs/cosmos/utils';
+import { MsgSend } from 'interchainjs/cosmos/bank/v1beta1/tx';
+
+(async () => {
+const [auth] = Secp256k1Auth.fromMnemonic(mnemonic, [
+HDPath.cosmos(0, 0, 0).toString(),
+]);
+const rpcEndpoint = 'http://your-rpc-endpoint:26657';
+
+// Create an AminoSigner instance
+const aminoSigner = new AminoSigner(
+auth,
+toEncoders(MsgSend),
+toConverters(MsgSend),
+rpcEndpoint,
+{ prefix: 'cosmos' }
+);
+
+// Build your message and set fee/memo if needed
+const msg = {
+// Your message fields here
+};
+
+const fee = {
+amount: [
+{
+denom: 'uatom',
+amount: '5000',
+},
+],
+gas: '200000',
+};
+
+const result = await aminoSigner.signAndBroadcast({
+messages: [msg], fee
+});
+console.log('Transaction hash:', result.hash);
+})();
+
+---
+
+TITLE: Using Tree-Shakable Query Helpers in InterchainJS
+DESCRIPTION: Demonstrates how to import and use tree-shakable query helper functions for optimized bundle size. The example shows querying blockchain balances using the getAllBalances helper.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-vue/README.md#2025-04-17_snippet_0
+
+LANGUAGE: javascript
+CODE:
+// Import only what you need
+import { getAllBalances } from "@interchainjs/cosmos/bank/v1beta1/query.rpc.func";
+
+// Now you can query the blockchain
+const balance = await getAllBalances(endpoint, {
+address: "cosmos1addresshere",
+});
+
+---
+
+TITLE: Importing Feegrant Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet shows the import of query and transaction helper functions for the Feegrant module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_12
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getAllowance,
+getAllowances,
+getAllowancesByGranter,
+} from "@interchainjs/cosmos/feegrant/v1beta1/query.rpc.func";
+
+// tx helpers
+import {
+grantAllowance,
+revokeAllowance,
+pruneAllowances,
+} from "@interchainjs/cosmos/feegrant/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Implementing Amino Transaction Builder in TypeScript
+DESCRIPTION: This code snippet extends the BaseCosmosTxBuilder class to create an AminoTxBuilder, which handles building and serializing Amino transactions for Cosmos.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_3
+
+LANGUAGE: typescript
+CODE:
+export class AminoTxBuilder extends BaseCosmosTxBuilder<CosmosAminoDoc> {
+constructor(
+protected ctx: BaseCosmosTxBuilderContext<
+AminoSignerBase<CosmosAminoDoc> >
+) {
+// Set the sign mode
+super(SignMode.SIGN_MODE_LEGACY_AMINO_JSON, ctx);
+}
+
+// Build the signing document
+async buildDoc({
+messages,
+fee,
+memo,
+options,
+}: CosmosSignArgs): Promise<CosmosAminoDoc> {
+// Implementation details...
+}
+
+// Serialize the signing document
+async buildDocBytes(doc: CosmosAminoDoc): Promise<Uint8Array> {
+// Implementation details...
+}
+
+async syncSignedDoc(
+txRaw: TxRaw,
+signResp: SignDocResponse<CosmosAminoDoc>
+): Promise<TxRaw> {
+// Implementation details...
+}
+}
+
+---
+
+TITLE: InterchainJS Modern Wallet Generation
+DESCRIPTION: Example of the new InterchainJS wallet generation approach using Secp256k1Auth.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_5
+
+LANGUAGE: typescript
+CODE:
+import { Secp256k1Auth } from '@interchainjs/auth/secp256k1';
+import { HDPath } from '@interchainjs/types';
+import { Bip39, Random } from '@interchainjs/crypto';
+
+(async () => {
+const mnemonic = Bip39.encode(Random.getBytes(16)).toString();
+const [auth] = Secp256k1Auth.fromMnemonic(mnemonic, [
+HDPath.cosmos(0, 0, 0).toString(),
+]);
+console.log("Wallet address:", await auth.getAddress());
+})();
+
+---
+
+TITLE: Importing Gov Query and Transaction Helpers in JavaScript
+DESCRIPTION: This code snippet illustrates the import of query and transaction helper functions for the Gov module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_13
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getProposal,
+getProposals,
+getVote,
+getVotes,
+getParams,
+getDeposit,
+getDeposits,
+getTallyResult,
+} from "@interchainjs/cosmos/gov/v1beta1/query.rpc.func";
+
+// tx helpers
+import {
+submitProposal,
+deposit,
+vote,
+voteWeighted,
+} from "@interchainjs/cosmos/gov/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Using SignerFromPrivateKey for Ethereum Transactions
+DESCRIPTION: Example of using SignerFromPrivateKey to send an Ethereum transaction using a private key. It shows how to create a signer, send an EIP1559 transaction with auto gas limit, and wait for the receipt.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#2025-04-17_snippet_2
+
+LANGUAGE: typescript
+CODE:
+import { SignerFromPrivateKey } from "@interchainjs/ethereum/signers/SignerFromPrivateKey"
+const signer = new SignerFromPrivateKey(privateKey, RPC_URL)
+const { txHash, wait } = await signer.sendEIP1559TransactionAutoGasLimit(
+recipientAddress,
+amount
+)
+const receipt = await wait()
+
+---
+
+TITLE: Migration Import Changes
+DESCRIPTION: Example of the required import statements when migrating to InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_8
+
+LANGUAGE: typescript
+CODE:
+import { Bip39, Random } from '@interchainjs/crypto';
+import { Secp256k1Auth } from '@interchainjs/auth/secp256k1';
+import { HDPath } from '@interchainjs/types';
+
+---
+
+TITLE: Importing Group Query and Transaction Helpers in JavaScript
+DESCRIPTION: This snippet demonstrates the import of query and transaction helper functions for the Group module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_14
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getGroupInfo,
+getGroupPolicyInfo,
+getGroupMembers,
+getGroupsByAdmin,
+getGroupPoliciesByGroup,
+getGroupPoliciesByAdmin,
+} from "@interchainjs/cosmos/group/v1/query.rpc.func";
+
+// tx helpers
+import {
+createGroup,
+updateGroupMetadata,
+updateGroupMembers,
+updateGroupAdmin,
+updateGroupPolicyMetadata,
+submitProposal,
+vote,
+exec,
+} from "@interchainjs/cosmos/group/v1/tx.rpc.func";
+
+---
+
+TITLE: Converting Between Bech32 and Hex Addresses in JavaScript
+DESCRIPTION: Demonstrates the usage of toBech32() and fromBech32() functions to convert between bech32 and hex address formats. The example shows conversion from hex to bech32 and vice versa using the 'tiov' prefix.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/packages/encoding/README.md#2025-04-17_snippet_0
+
+LANGUAGE: javascript
+CODE:
+
+> > toBech32("tiov", fromHex("1234ABCD0000AA0000FFFF0000AA00001234ABCD"))
+> > 'tiov1zg62hngqqz4qqq8lluqqp2sqqqfrf27dzrrmea'
+> > toHex(fromBech32("tiov1zg62hngqqz4qqq8lluqqp2sqqqfrf27dzrrmea").data)
+> > '1234abcd0000aa0000ffff0000aa00001234abcd'
+
+---
+
+TITLE: InterchainJS Modern Transaction Signing
+DESCRIPTION: Example of the new InterchainJS transaction signing and broadcasting approach.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#2025-04-17_snippet_7
+
+LANGUAGE: typescript
+CODE:
+import { DirectSigner } from '@interchainjs/cosmos/signers/direct';
+
+(async () => {
+// Assume wallet generation using InterchainJS methods as shown earlier has been completed.
+
+const msg = {
+// Construct your message here using interchainjs
+};
+const fee = {
+amount: [{ denom: 'uatom', amount: '5000' }],
+gas: '200000',
+};
+const memo = "InterchainJS transaction test";
+
+const result = await signer.signAndBroadcast({
+messages: [msg], fee, memo
+});
+console.log("Transaction hash:", result.hash);
+})();
+
+---
+
+TITLE: Importing Mint Query and Transaction Helpers in JavaScript
+DESCRIPTION: This code snippet shows the import of query and transaction helper functions for the Mint module from InterchainJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_15
+
+LANGUAGE: javascript
+CODE:
+// query helpers
+import {
+getParams,
+getInflation,
+getAnnualProvisions,
+} from "@interchainjs/cosmos/mint/v1beta1/query.rpc.func";
+
+// tx helpers
+import { updateParams } from "@interchainjs/cosmos/mint/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Direct Signing Implementation Example
+DESCRIPTION: Example showing how to use DirectSigner for signing and broadcasting transactions. Demonstrates the basic setup and usage with AUTH, ENCODER, and RPC endpoint parameters.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/cosmos/README.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+// import \* from "@interchainjs/cosmos"; // Error: use sub-imports, to ensure small app size
+import { DirectSigner } from "@interchainjs/cosmos/signers/direct";
+
+const signer = new DirectSigner(<AUTH>, <ENCODER>[], <RPC_ENDPOINT>); // **ONLY** rpc endpoint is supported for now
+const result = await signer.signAndBroadcast(<MESSAGE>[]);
+console.log(result.hash); // the hash of TxRaw
+
+---
+
+TITLE: Importing Oracle Transaction Helper Functions
+DESCRIPTION: Transaction helper functions for the Oracle module to relay price data from various sources like Band Protocol, Coinbase, and Pyth.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_7
+
+LANGUAGE: javascript
+CODE:
+import {
+relayBandRates,
+relayCoinbaseMessages,
+relayPriceFeedPrice,
+relayProviderPrices,
+relayPythPrices,
+relayStorkMessage,
+requestBandIBCRates,
+} from "injectivejs/injective/oracle/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Auth and Wallet Interface Comparison in TypeScript
+DESCRIPTION: TypeScript interface definitions comparing Auth and Wallet interfaces. This code shows how Auth handles signing of binary data while Wallet provides methods for signing specific document formats (DirectDoc and AminoDoc) used in Cosmos-based networks.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/auth.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+/\*_ you can import { Auth, Wallet } from "@interchainjs/types" _/
+
+export interface Auth {
+...,
+sign: (data: Uint8Array) => Signature;
+}
+
+export interface Wallet<Account, SignDoc> {
+...,
+async signDirect(
+signerAddress: string,
+signDoc: CosmosDirectDoc
+): Promise<DirectSignResponse>;
+async signAmino(
+signerAddress: string,
+signDoc: CosmosAminoDoc
+): Promise<AminoSignResponse>;
+}
+
+---
+
+TITLE: Importing Exchange Transaction Helper Functions
+DESCRIPTION: Example of importing transaction helper functions for the Exchange module to create and manage positions and deposits.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_2
+
+LANGUAGE: javascript
+CODE:
+import {
+createDeposit,
+createLiquidatePosition,
+createActivateStakeGrant,
+} from "injectivejs/injective/exchange/v1beta1/tx.rpc.func";
+
+---
+
+TITLE: Defining EIP-712 Signer Types in TypeScript
+DESCRIPTION: Type definitions for the EIP-712 signing process, including transaction request, document, address, and broadcast response types
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_5
+
+LANGUAGE: typescript
+CODE:
+SignArgs = TransactionRequest;
+
+Tx = string; // Serialized signed transaction as a hex string.
+
+Doc = TransactionRequest;
+
+AddressResponse = string;
+
+BroadcastResponse = TransactionResponse;
+
+BroadcastOpts = unknown;
+
+SignDocResp = string; // Signature string of the signed document.
+
+---
+
+TITLE: Composing Exchange Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the Exchange module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_12
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/exchange/v1beta1/tx.registry";
+
+const { createSpotLimitOrder, createSpotMarketOrder, deposit } =
+MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Implementing ByteAuth Interface for Secp256k1 in TypeScript
+DESCRIPTION: This code snippet shows the implementation of the ByteAuth interface for Secp256k1 authentication, which allows signing of arbitrary byte arrays.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_1
+
+LANGUAGE: typescript
+CODE:
+export class Secp256k1Auth implements ByteAuth<RecoveredSignatureType> {
+// Implementation details...
+}
+
+---
+
+TITLE: Composing Auction Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the Auction module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_13
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/auction/v1beta1/tx.registry";
+
+const { bid } = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Implementing UniEip712Signer Interface
+DESCRIPTION: Definition of the UniEip712Signer interface that extends UniSigner with specific types for EIP-712 signing
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_6
+
+LANGUAGE: typescript
+CODE:
+import { UniSigner } from "@interchainjs/types";
+import { TransactionRequest, TransactionResponse } from "ethers";
+
+export type UniEip712Signer = UniSigner<
+TransactionRequest,
+string,
+TransactionRequest,
+string,
+TransactionResponse,
+unknown,
+string
+
+> ;
+
+---
+
+TITLE: Composing Oracle Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the Oracle module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_17
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/oracle/v1beta1/tx.registry";
+
+const {
+relayBandRates,
+relayCoinbaseMessages,
+relayPriceFeedPrice,
+relayProviderPrices,
+requestBandIBCRates,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Composing Peggy Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the Peggy module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_18
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/peggy/v1/tx.registry";
+
+const {
+cancelSendToEth,
+confirmBatch,
+depositClaim,
+eRC20DeployedClaim,
+requestBatch,
+sendToEth,
+setOrchestratorAddresses,
+submitBadSignatureEvidence,
+valsetConfirm,
+valsetUpdateClaim,
+withdrawClaim,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Implementing Eip712Signer Class
+DESCRIPTION: Main signer implementation class that handles transaction signing and broadcasting using the EIP-712 standard
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_8
+
+LANGUAGE: typescript
+CODE:
+import {
+IKey,
+SignDocResponse,
+SignResponse,
+BroadcastOptions,
+Auth,
+isDocAuth,
+HttpEndpoint,
+} from "@interchainjs/types";
+import {
+JsonRpcProvider,
+Provider,
+TransactionRequest,
+TransactionResponse,
+} from "ethers";
+import { UniEip712Signer } from "../types";
+import { Eip712DocAuth } from "../types/docAuth";
+import { IEthereumGenericOfflineSigner } from "../types/wallet";
+
+export class Eip712Signer implements UniEip712Signer {
+provider: Provider;
+docAuth: Eip712DocAuth;
+
+constructor(auth: Auth, public endpoint: string) {
+this.provider = new JsonRpcProvider(endpoint);
+this.docAuth = auth as Eip712DocAuth;
+}
+
+static async fromWallet(
+signer: IEthereumGenericOfflineSigner,
+endpoint?: string
+) {
+const auth = await Eip712DocAuth.fromOfflineSigner(signer);
+
+    return new Eip712Signer(auth, endpoint);
+
+}
+
+async getAddress(): Promise<string> {
+return this.docAuth.address;
+}
+
+signArbitrary(data: Uint8Array): IKey | Promise<IKey> {
+throw new Error("Method not supported.");
+}
+
+async signDoc(doc: TransactionRequest): Promise<string> {
+return this.docAuth.signDoc(doc);
+}
+
+broadcastArbitrary(
+data: Uint8Array,
+options?: unknown
+): Promise<TransactionResponse> {
+throw new Error("Method not supported.");
+}
+
+async sign(
+args: TransactionRequest
+): Promise<
+SignResponse<
+string,
+TransactionRequest,
+TransactionResponse,
+BroadcastOptions >
+
+> {
+
+    const result = await this.signDoc(args);
+
+    return {
+      tx: result,
+      doc: args,
+      broadcast: async () => {
+        return this.provider.broadcastTransaction(result);
+      },
+    };
+
+}
+
+async signAndBroadcast(
+args: TransactionRequest
+): Promise<TransactionResponse> {
+const result = await this.signDoc(args);
+
+    return this.provider.broadcastTransaction(result);
+
+}
+
+broadcast(tx: string): Promise<TransactionResponse> {
+return this.provider.broadcastTransaction(tx);
+}
+}
+
+---
+
+TITLE: Importing Cosmos Staking Messages in JavaScript
+DESCRIPTION: This snippet illustrates how to import and destructure message composers for Cosmos staking operations using InjectiveJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_23
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/staking/v1beta1/tx.registry";
+
+const {
+beginRedelegate,
+createValidator,
+delegate,
+editValidator,
+undelegate,
+} = MessageComposer.fromPartial;
+
+---
+
+TITLE: Composing OCR Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the OCR module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_16
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/ocr/v1beta1/tx.registry";
+
+const {
+acceptPayeeship,
+createFeed,
+fundFeedRewardPool,
+setPayees,
+transferPayeeship,
+transmit,
+updateFeed,
+withdrawFeedRewardPool,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Creating OfflineSigner from Secp256k1HDWallet in TypeScript
+DESCRIPTION: This snippet shows how to create an OfflineSigner object from a Secp256k1HDWallet instance. It demonstrates hiding the private key by converting the wallet to an offline direct signer and retrieving the first account's address.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/wallet.md#2025-04-17_snippet_2
+
+LANGUAGE: typescript
+CODE:
+protoSigner = wallet.toOfflineDirectSigner();
+address = (await protoSigner.getAccounts())[0].address;
+
+---
+
+TITLE: Importing Cosmos Governance Messages in JavaScript
+DESCRIPTION: This snippet demonstrates how to import and destructure message composers for Cosmos governance operations using InjectiveJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_24
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/gov/v1beta1/tx.registry";
+
+const { deposit, submitProposal, vote, voteWeighted } =
+cosmos.gov.v1beta1.MessageComposer.fromPartial;
+
+---
+
+TITLE: Composing Insurance Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the Insurance module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_15
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/injective/insurance/v1beta1/tx.registry";
+
+const { createInsuranceFund, requestRedemption, underwrite } =
+MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Defining and Implementing Generic Offline Signer for Cosmos Amino in TypeScript
+DESCRIPTION: This snippet defines the IAminoGenericOfflineSigner interface and implements the AminoGenericOfflineSigner class for handling offline signing of Cosmos Amino transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#2025-04-17_snippet_2
+
+LANGUAGE: typescript
+CODE:
+export interface IAminoGenericOfflineSigner
+extends IGenericOfflineSigner<
+string,
+CosmosAminoDoc,
+AminoSignResponse,
+IAminoGenericOfflineSignArgs,
+AccountData
+
+> {}
+
+export class AminoGenericOfflineSigner
+implements IAminoGenericOfflineSigner
+{
+constructor(public offlineSigner: OfflineAminoSigner) {}
+
+readonly signMode: string = SIGN_MODE.AMINO;
+
+getAccounts(): Promise<readonly AccountData[]> {
+return this.offlineSigner.getAccounts();
+}
+
+sign({ signerAddress, signDoc }: IAminoGenericOfflineSignArgs) {
+return this.offlineSigner.signAmino(signerAddress, signDoc);
+}
+}
+
+---
+
+TITLE: Importing Cosmos Bank Messages from InjectiveJS
+DESCRIPTION: Shows how to import and destructure Cosmos Bank-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_7
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/bank/v1beta1/tx.registry";
+
+const { multiSend, send } = MessageComposer.fromPartial;
+
+---
+
+TITLE: Composing CosmWasm Messages with TypeUrl
+DESCRIPTION: Example of importing and using MessageComposer to create typed messages for the CosmWasm module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#2025-04-17_snippet_19
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmwasm/wasm/v1/tx.registry";
+
+const {
+clearAdmin,
+executeContract,
+instantiateContract,
+migrateContract,
+storeCode,
+updateAdmin,
+} = MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Using Transaction Hooks
+DESCRIPTION: Implementation of React hooks for delegation and validator queries using react-query
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_2
+
+LANGUAGE: javascript
+CODE:
+import { useDelegate } from "injective-react/cosmos/staking/v1beta1/tx.rpc.react";
+import { useGetValidators } from "injective-react/cosmos/staking/v1beta1/query.rpc.react";
+
+const {
+data,
+isSuccess: isGetValidatorsDone,
+isLoading: isGetValidatorsLoading,
+} = useGetValidators({
+request: {
+status: "BOND_STATUS_BONDED",
+},
+options: {
+context: defaultContext,
+enabled: !validatorAddress,
+},
+rpcClient,
+});
+
+const { mutate: delegate, isSuccess: isDelegateSuccess } = useDelegate({
+clientResolver: signingClient,
+options: {
+context: defaultContext,
+onSuccess: (data: any) => {
+console.log("onSuccess", data);
+},
+onError: (error) => {
+console.log("onError", error);
+},
+},
+});
+
+---
+
+TITLE: Visualizing InterchainJS Components and Signers with Mermaid Diagram
+DESCRIPTION: A mermaid diagram illustrating how InterchainJS connects different signer types to various network classes, showing the adaptability for Cosmos, Injective, Ethereum, and custom networks.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/README.md#2025-04-17_snippet_0
+
+LANGUAGE: mermaid
+CODE:
+graph LR
+signers --> cosmos_signer["Cosmos Network"]
+signers --> injective_signer["Injective Network"]
+signers --> ethereum_signer["Ethereum Network"]
+signers --> implement_signer["ANY Network"]
+
+    cosmos_signer --> cosmos_amino["Amino Signer"]
+    cosmos_signer --> cosmos_direct["Direct Signer"]
+
+    ethereum_signer --> ethereum_eip712["EIP712 Signer"]
+
+    injective_signer --> injective_amino["Amino Signer"]
+    injective_signer --> injective_direct["Direct Signer"]
+
+    implement_signer --> any_signer["Any Signer"]
+
+    style signers fill:#f9f,stroke:#333,stroke-width:2px
+
+---
+
+TITLE: Composing Exchange Messages in JavaScript
+DESCRIPTION: Imports and destructures exchange-related message composers from the injective-vue library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#2025-04-17_snippet_2
+
+LANGUAGE: javascript
+CODE:
+import { injective } from "injective-vue";
+
+const { createSpotLimitOrder, createSpotMarketOrder, deposit } =
+injective.exchange.v1beta1.MessageComposer.withTypeUrl;
+
+---
+
+TITLE: Advanced Signing Client Configuration in JavaScript
+DESCRIPTION: Shows how to manually construct a signing client with custom proto registry and amino converters.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#2025-04-17_snippet_5
+
+LANGUAGE: javascript
+CODE:
+import {
+cosmosAminoConverters,
+cosmosProtoRegistry,
+cosmwasmAminoConverters,
+cosmwasmProtoRegistry,
+ibcProtoRegistry,
+ibcAminoConverters,
+injectiveAminoConverters,
+injectiveProtoRegistry
+} from 'injective-vue';
+
+const signer: OfflineSigner = /_ create your signer (see above) _/
+const rpcEndpoint = 'https://rpc.cosmos.directory/injective'; // or another URL
+
+const protoRegistry: ReadonlyArray<[string, GeneratedType]> = [
+...cosmosProtoRegistry,
+...cosmwasmProtoRegistry,
+...ibcProtoRegistry,
+...injectiveProtoRegistry
+];
+
+const aminoConverters = {
+...cosmosAminoConverters,
+...cosmwasmAminoConverters,
+...ibcAminoConverters,
+...injectiveAminoConverters
+};
+
+const registry = new Registry(protoRegistry);
+const aminoTypes = new AminoTypes(aminoConverters);
+
+const signingClient = await SigningClient.connectWithSigner(rpcEndpoint, signer);
+
+signingClient.addEncoders(registry);
+signingClient.addConverters(aminoTypes);
+
+---
+
+TITLE: Importing Cosmos Distribution Messages from InjectiveJS
+DESCRIPTION: Demonstrates how to import and destructure Cosmos Distribution-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_6
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/distribution/v1beta1/tx.registry";
+
+const {
+fundCommunityPool,
+setWithdrawAddress,
+withdrawDelegatorReward,
+withdrawValidatorCommission,
+} = MessageComposer.fromPartial;
+
+---
+
+TITLE: InterchainJS Component Architecture Diagram
+DESCRIPTION: Mermaid diagram showing the component architecture of InterchainJS, including signers and network connections.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_1
+
+LANGUAGE: mermaid
+CODE:
+graph LR
+signers --> cosmos_signer["Cosmos Network"]
+signers --> injective_signer["Injective Network"]
+signers --> ethereum_signer["Ethereum Network"]
+signers --> implement_signer["ANY Network"]
+
+    cosmos_signer --> cosmos_amino["Amino Signer"]
+    cosmos_signer --> cosmos_direct["Direct Signer"]
+
+    ethereum_signer --> ethereum_eip712["EIP712 Signer"]
+
+    injective_signer --> injective_amino["Amino Signer"]
+    injective_signer --> injective_direct["Direct Signer"]
+
+    implement_signer --> any_signer["Any Signer"]
+
+    style signers fill:#f9f,stroke:#333,stroke-width:2px
+
+---
+
+TITLE: Importing Cosmos Staking Messages from InjectiveJS
+DESCRIPTION: Illustrates how to import and destructure Cosmos Staking-related message composers from the InjectiveJS library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_8
+
+LANGUAGE: javascript
+CODE:
+import { MessageComposer } from "injectivejs/cosmos/staking/v1beta1/tx.registry";
+
+const {
+beginRedelegate,
+createValidator,
+delegate,
+editValidator,
+undelegate,
+} = MessageComposer.fromPartial;
