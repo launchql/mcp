@@ -1076,49 +1076,6 @@ signerOptions: defaultSignerOptions.Cosmos,
 
 ---
 
-TITLE: Class Diagram for Wallet Implementation in Mermaid
-DESCRIPTION: A class diagram showing the relationships between ICosmosWallet, OfflineDirectSigner, OfflineAminoSigner, and Secp256k1HDWallet. It illustrates the inheritance and implementation relationships between these classes and interfaces.
-SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/wallet.md#2025-04-17_snippet_0
-
-LANGUAGE: mermaid
-CODE:
-classDiagram
-class ICosmosWallet {
-+getAccounts() Promise~AccountData[]~
-}
-
-    class OfflineDirectSigner {
-        +getAccounts() Promise~AccountData[]~
-        +signDirect(signerAddress: string, signDoc: CosmosDirectDoc) Promise~DirectSignResponse~
-    }
-
-    class OfflineAminoSigner {
-        +getAccounts() Promise~AccountData[]~
-        +signAmino(signerAddress: string, signDoc: CosmosAminoDoc) Promise~AminoSignResponse~
-    }
-
-    class Secp256k1HDWallet {
-        +accounts: ICosmosAccount[]
-        +options: SignerConfig
-        +getAccounts() Promise~AccountData[]~
-        +signDirect(signerAddress: string, signDoc: CosmosDirectDoc) Promise~DirectSignResponse~
-        +signAmino(signerAddress: string, signDoc: CosmosAminoDoc) Promise~AminoSignResponse~
-        +toOfflineDirectSigner() OfflineDirectSigner
-        +toOfflineAminoSigner() OfflineAminoSigner
-        +fromMnemonic(mnemonic: string, derivations: AddrDerivation[], options?: WalletOptions) Secp256k1HDWallet
-        -getAcctFromBech32Addr(address: string) ICosmosAccount
-    }
-
-    OfflineDirectSigner <|.. Secp256k1HDWallet
-    OfflineAminoSigner <|.. Secp256k1HDWallet
-    ICosmosWallet <|.. Secp256k1HDWallet
-
-    style OfflineDirectSigner fill:#f9f,stroke:#333,stroke-width:2px
-    style OfflineAminoSigner fill:#f9f,stroke:#333,stroke-width:2px
-    style ICosmosWallet fill:#f9f,stroke:#333,stroke-width:2px
-
----
-
 TITLE: Using Custom React Query Hooks
 DESCRIPTION: Implementation of a custom React hook for querying balance information. Shows integration with react-query context and demonstrates conditional query execution.
 SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchain-react/README.md#2025-04-17_snippet_1
@@ -2163,32 +2120,6 @@ console.log("onError", error);
 
 ---
 
-TITLE: Visualizing InterchainJS Components and Signers with Mermaid Diagram
-DESCRIPTION: A mermaid diagram illustrating how InterchainJS connects different signer types to various network classes, showing the adaptability for Cosmos, Injective, Ethereum, and custom networks.
-SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/README.md#2025-04-17_snippet_0
-
-LANGUAGE: mermaid
-CODE:
-graph LR
-signers --> cosmos_signer["Cosmos Network"]
-signers --> injective_signer["Injective Network"]
-signers --> ethereum_signer["Ethereum Network"]
-signers --> implement_signer["ANY Network"]
-
-    cosmos_signer --> cosmos_amino["Amino Signer"]
-    cosmos_signer --> cosmos_direct["Direct Signer"]
-
-    ethereum_signer --> ethereum_eip712["EIP712 Signer"]
-
-    injective_signer --> injective_amino["Amino Signer"]
-    injective_signer --> injective_direct["Direct Signer"]
-
-    implement_signer --> any_signer["Any Signer"]
-
-    style signers fill:#f9f,stroke:#333,stroke-width:2px
-
----
-
 TITLE: Composing Exchange Messages in JavaScript
 DESCRIPTION: Imports and destructures exchange-related message composers from the injective-vue library.
 SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#2025-04-17_snippet_2
@@ -2263,32 +2194,6 @@ withdrawValidatorCommission,
 
 ---
 
-TITLE: InterchainJS Component Architecture Diagram
-DESCRIPTION: Mermaid diagram showing the component architecture of InterchainJS, including signers and network connections.
-SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/interchainjs/README.md#2025-04-17_snippet_1
-
-LANGUAGE: mermaid
-CODE:
-graph LR
-signers --> cosmos_signer["Cosmos Network"]
-signers --> injective_signer["Injective Network"]
-signers --> ethereum_signer["Ethereum Network"]
-signers --> implement_signer["ANY Network"]
-
-    cosmos_signer --> cosmos_amino["Amino Signer"]
-    cosmos_signer --> cosmos_direct["Direct Signer"]
-
-    ethereum_signer --> ethereum_eip712["EIP712 Signer"]
-
-    injective_signer --> injective_amino["Amino Signer"]
-    injective_signer --> injective_direct["Direct Signer"]
-
-    implement_signer --> any_signer["Any Signer"]
-
-    style signers fill:#f9f,stroke:#333,stroke-width:2px
-
----
-
 TITLE: Importing Cosmos Staking Messages from InjectiveJS
 DESCRIPTION: Illustrates how to import and destructure Cosmos Staking-related message composers from the InjectiveJS library.
 SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#2025-04-17_snippet_8
@@ -2304,3 +2209,377 @@ delegate,
 editValidator,
 undelegate,
 } = MessageComposer.fromPartial;
+
+---
+
+TITLE: Creating Secp256k1HDWallet and Deriving Signers
+DESCRIPTION: Example of generating wallets from a mnemonic using Secp256k1HDWallet and obtaining both Direct and Amino offline signers for a given chain prefix and HD path.
+
+LANGUAGE: typescript
+CODE:
+import {
+  AminoGenericOfflineSigner,
+  DirectGenericOfflineSigner,
+  OfflineAminoSigner,
+  OfflineDirectSigner,
+} from '@interchainjs/cosmos/types/wallet';
+import { Secp256k1HDWallet } from '@interchainjs/cosmos/wallets/secp256k1hd';
+
+const commonPrefix = 'osmo'; // Example prefix
+const cosmosHdPath = "m/44'/118'/0'/0/0";
+let directSigner: OfflineDirectSigner, aminoSigner: OfflineAminoSigner;
+let directAddress: string, aminoAddress: string;
+
+// Initialize wallets
+const directWallet = Secp256k1HDWallet.fromMnemonic(<MNEMONIC>, [
+  {
+    prefix: commonPrefix,
+    hdPath: cosmosHdPath,
+  },
+]);
+const aminoWallet = Secp256k1HDWallet.fromMnemonic(<MNEMONIC>, [
+  {
+    prefix: commonPrefix,
+    hdPath: cosmosHdPath,
+  },
+]);
+directSigner = directWallet.toOfflineDirectSigner();
+aminoSigner = aminoWallet.toOfflineAminoSigner();
+directAddress = (await directSigner.getAccounts())[0].address;
+aminoAddress = (await aminoSigner.getAccounts())[0].address;
+
+---
+
+TITLE: Connecting Signing Client with Direct Signer
+DESCRIPTION: Demonstrates how to connect the CosmosSigningClient using a DirectGenericOfflineSigner derived from an OfflineDirectSigner. Specifies broadcast options.
+
+LANGUAGE: typescript
+CODE:
+import { DirectGenericOfflineSigner, OfflineDirectSigner } from '@interchainjs/cosmos/types/wallet';
+import { SigningClient as CosmosSigningClient } from '@interchainjs/cosmos/signing-client';
+
+declare const getRpcEndpoint: () => Promise<string>;
+declare const directSigner: OfflineDirectSigner;
+
+const signingClientDirect = await CosmosSigningClient.connectWithSigner(
+  await getRpcEndpoint(),
+  new DirectGenericOfflineSigner(directSigner),
+  {
+    broadcast: {
+      checkTx: true,
+      deliverTx: true,
+      useLegacyBroadcastTxCommit: true, // Example option
+    },
+  }
+);
+
+---
+
+TITLE: Connecting Signing Client with Amino Signer
+DESCRIPTION: Demonstrates how to connect the CosmosSigningClient using an AminoGenericOfflineSigner derived from an OfflineAminoSigner for legacy transaction compatibility.
+
+LANGUAGE: typescript
+CODE:
+import { AminoGenericOfflineSigner, OfflineAminoSigner } from '@interchainjs/cosmos/types/wallet';
+import { SigningClient as CosmosSigningClient } from '@interchainjs/cosmos/signing-client';
+
+declare const getRpcEndpoint: () => Promise<string>;
+declare const aminoSigner: OfflineAminoSigner;
+
+const signingClientAmino = await CosmosSigningClient.connectWithSigner(
+  await getRpcEndpoint(),
+  new AminoGenericOfflineSigner(aminoSigner),
+  {
+    broadcast: {
+      checkTx: true,
+      deliverTx: true,
+      useLegacyBroadcastTxCommit: true, // Example option
+    },
+  }
+);
+
+---
+
+TITLE: Querying Account Balance using Helper Function
+DESCRIPTION: Example of using the `getBalance` query helper function to fetch the balance of a specific denomination for an address.
+
+LANGUAGE: typescript
+CODE:
+import { getBalance } from "interchainjs/cosmos/bank/v1beta1/query.rpc.func";
+import { QueryBalanceResponse } from 'interchainjs/cosmos/bank/v1beta1/query';
+
+declare const getRpcEndpoint: () => Promise<string>;
+declare const directAddress: string;
+declare const denom: string;
+
+const { balance }: QueryBalanceResponse = await getBalance(await getRpcEndpoint(), {
+  address: directAddress,
+  denom,
+});
+
+console.log(balance!.amount); // e.g., '10000000000'
+
+---
+
+TITLE: Querying Bonded Validators using Helper Function
+DESCRIPTION: Example of using the `getValidators` query helper function to fetch validators with a specific status (e.g., Bonded).
+
+LANGUAGE: typescript
+CODE:
+import { getValidators } from "interchainjs/cosmos/staking/v1beta1/query.rpc.func";
+import { QueryValidatorsResponse } from 'interchainjs/cosmos/staking/v1beta1/query';
+import { BondStatus, bondStatusToJSON } from 'interchainjs/cosmos/staking/v1beta1/staking';
+
+declare const getRpcEndpoint: () => Promise<string>;
+
+const { validators }: QueryValidatorsResponse = await getValidators(await getRpcEndpoint(), {
+  status: bondStatusToJSON(BondStatus.BOND_STATUS_BONDED),
+});
+
+if (validators.length > 0) {
+  const validatorAddress = validators[0].operatorAddress;
+  console.log(validatorAddress);
+}
+
+---
+
+TITLE: Delegating Tokens using Staking Helper Function
+DESCRIPTION: Demonstrates using the `delegate` transaction helper function from the staking module to delegate tokens to a validator.
+
+LANGUAGE: typescript
+CODE:
+import { delegate } from "interchainjs/cosmos/staking/v1beta1/tx.rpc.func";
+import { SigningClient as CosmosSigningClient } from '@interchainjs/cosmos/signing-client'; // Assuming client is already connected
+import { assertIsDeliverTxSuccess } from '@interchainjs/cosmos/utils';
+
+declare const signingClient: CosmosSigningClient; // Assumes a connected SigningClient
+declare const directAddress: string;
+declare const validatorAddress: string;
+declare const denom: string;
+
+const delegationAmount = '5000000000'; // Example amount
+const fee = {
+  amount: [{ denom, amount: '100000' }],
+  gas: '550000',
+};
+
+const result = await delegate(
+  signingClient,
+  directAddress,
+  {
+    delegatorAddress: directAddress,
+    validatorAddress: validatorAddress,
+    amount: {
+      amount: delegationAmount,
+      denom: denom,
+    },
+  },
+  fee,
+  "delegate memo" // Optional memo
+);
+
+assertIsDeliverTxSuccess(result);
+
+---
+
+TITLE: Submitting a Text Proposal using Gov Helper Function
+DESCRIPTION: Example of using the `submitProposal` transaction helper function from the governance module to submit a `TextProposal`.
+
+LANGUAGE: typescript
+CODE:
+import { submitProposal } from "interchainjs/cosmos/gov/v1beta1/tx.rpc.func";
+import { TextProposal } from 'interchainjs/cosmos/gov/v1beta1/gov';
+import { SigningClient as CosmosSigningClient } from '@interchainjs/cosmos/signing-client'; // Assuming client is already connected
+import { assertIsDeliverTxSuccess } from '@interchainjs/cosmos/utils';
+
+declare const signingClient: CosmosSigningClient; // Assumes a connected SigningClient
+declare const directAddress: string;
+declare const denom: string;
+
+const contentMsg = TextProposal.fromPartial({
+  title: 'Test Proposal',
+  description: 'Test text proposal for the e2e testing',
+});
+
+const fee = {
+  amount: [{ denom, amount: '100000' }],
+  gas: '550000',
+};
+
+const result = await submitProposal(
+  signingClient,
+  directAddress,
+  {
+    proposer: directAddress,
+    initialDeposit: [{ amount: '1000000', denom: denom }],
+    content: {
+      typeUrl: '/cosmos.gov.v1beta1.TextProposal',
+      value: TextProposal.encode(contentMsg).finish(),
+    },
+  },
+  fee,
+  "submit proposal memo" // Optional memo
+);
+assertIsDeliverTxSuccess(result);
+
+// Extract proposal ID (see next snippet)
+
+---
+
+TITLE: Extracting Proposal ID from Transaction Events
+DESCRIPTION: Shows how to parse transaction events after submitting a proposal to extract the `proposal_id`. Uses `fromBase64` and `toUtf8` utilities.
+
+LANGUAGE: typescript
+CODE:
+import { fromBase64, toUtf8 } from '@interchainjs/utils';
+import { DeliverTxResponse } from '@interchainjs/cosmos/types/broadcast'; // Assuming result is DeliverTxResponse
+
+declare const result: DeliverTxResponse; // Result from submitProposal
+let proposalId: string;
+
+const proposalIdEvent = result.events.find(
+  (event: any) => event.type === 'submit_proposal' // Type assertion might be needed
+);
+const proposalIdAttribute = proposalIdEvent!.attributes.find(
+  (attr: any) => toUtf8(fromBase64(attr.key)) === 'proposal_id' // Type assertion might be needed
+);
+proposalId = toUtf8(fromBase64(proposalIdAttribute!.value));
+
+console.log(proposalId);
+
+---
+
+TITLE: Querying a Proposal using Gov Helper Function
+DESCRIPTION: Example of using the `getProposal` query helper function to fetch details of a specific proposal by its ID.
+
+LANGUAGE: typescript
+CODE:
+import { getProposal } from "interchainjs/cosmos/gov/v1beta1/query.rpc.func";
+import { QueryProposalResponse } from 'interchainjs/cosmos/gov/v1beta1/query';
+
+declare const getRpcEndpoint: () => Promise<string>;
+declare const proposalId: string; // Assumes proposalId is known
+
+const { proposal }: QueryProposalResponse = await getProposal(await getRpcEndpoint(), {
+  proposalId: BigInt(proposalId),
+});
+
+console.log(proposal.proposalId.toString()); // Should match proposalId
+console.log(proposal.status);
+
+---
+
+TITLE: Voting on a Proposal using Gov Helper Function
+DESCRIPTION: Demonstrates using the `vote` transaction helper function from the governance module to cast a vote on a proposal.
+
+LANGUAGE: typescript
+CODE:
+import { vote } from "interchainjs/cosmos/gov/v1beta1/tx.rpc.func";
+import { VoteOption } from 'interchainjs/cosmos/gov/v1beta1/gov';
+import { SigningClient as CosmosSigningClient } from '@interchainjs/cosmos/signing-client'; // Assuming client is already connected
+import { assertIsDeliverTxSuccess } from '@interchainjs/cosmos/utils';
+
+declare const signingClient: CosmosSigningClient; // Assumes a connected SigningClient
+declare const directAddress: string;
+declare const proposalId: string; // Assumes proposalId is known
+declare const denom: string;
+
+const fee = {
+  amount: [{ denom, amount: '100000' }],
+  gas: '550000',
+};
+
+const result = await vote(
+  signingClient,
+  directAddress, // Voter address
+  {
+    proposalId: BigInt(proposalId),
+    voter: directAddress,
+    option: VoteOption.VOTE_OPTION_YES, // Or other VoteOption
+  },
+  fee,
+  "vote memo" // Optional memo
+);
+assertIsDeliverTxSuccess(result);
+
+---
+
+TITLE: Querying a Vote using Gov Helper Function
+DESCRIPTION: Example of using the `getVote` query helper function to fetch details of a specific vote on a proposal by a voter.
+
+LANGUAGE: typescript
+CODE:
+import { getVote } from "interchainjs/cosmos/gov/v1beta1/query.rpc.func";
+import { QueryVoteResponse } from 'interchainjs/cosmos/gov/v1beta1/query';
+import { VoteOption } from 'interchainjs/cosmos/gov/v1beta1/gov';
+
+declare const getRpcEndpoint: () => Promise<string>;
+declare const proposalId: string; // Assumes proposalId is known
+declare const directAddress: string; // Voter address
+
+const { vote: voteInfo }: QueryVoteResponse = await getVote(await getRpcEndpoint(), {
+  proposalId: BigInt(proposalId),
+  voter: directAddress,
+});
+
+console.log(voteInfo.proposalId.toString()); // Should match proposalId
+console.log(voteInfo.voter); // Should match voter address
+console.log(voteInfo.option); // Should match the voted option
+
+---
+
+TITLE: Asserting Successful Transaction Delivery
+DESCRIPTION: Shows the usage of `assertIsDeliverTxSuccess` utility function to verify that a broadcasted transaction was successfully included in a block.
+
+LANGUAGE: typescript
+CODE:
+import { assertIsDeliverTxSuccess } from '@interchainjs/cosmos/utils';
+import { DeliverTxResponse } from '@interchainjs/cosmos/types/broadcast';
+
+declare const result: DeliverTxResponse; // Assume 'result' is the outcome of a signAndBroadcast or helper function call
+
+try {
+  assertIsDeliverTxSuccess(result);
+  console.log("Transaction successful:", result.transactionHash);
+} catch (error) {
+  console.error("Transaction failed:", error);
+}
+
+---
+
+TITLE: Using the useDelegate Hook for Staking Transactions
+DESCRIPTION: This snippet demonstrates how to use the `useDelegate` hook from `@interchainjs/react` to initiate a delegation transaction in a React component. It shows the setup with a signing client resolver and toast handlers for user feedback.
+
+LANGUAGE: typescript
+CODE:
+import { useDelegate } from '@interchainjs/react/cosmos/staking/v1beta1/tx.rpc.react';
+import { MsgDelegate } from '@interchainjs/react/cosmos/staking/v1beta1/tx';
+import { defaultContext } from '@tanstack/react-query';
+
+// Inside a React component
+const chainName = 'your-chain-name'; // Replace with actual chain name
+const signingClient; // Get the signingClient properly based on existing code
+
+const { mutate: delegate, isLoading: isDelegating } = useDelegate({
+  clientResolver: signingClient,
+  options: {
+     context: defaultContext,
+  },
+});
+
+const address = 'delegator_address'; // Replace with actual delegator address
+const selectedValidatorAddress = 'validator_address'; // Replace with actual validator address
+const amount = 10000000; // Delegation amount without formatting
+const denom = 'uatom'; // Token base denomination
+
+const message = MsgDelegate.fromPartial({
+  delegatorAddress: address,
+  validatorAddress: selectedValidatorAddress,
+  amount: {
+    amount, 
+    denom,
+  },
+});
+
+// Call delegate function later with transaction details
+delegate({ signerAddress, message, fee, memo }, options);
