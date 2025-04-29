@@ -1,0 +1,137 @@
+TITLE: Using the useChain hook (React)
+DESCRIPTION: The `useChain` hook provides access to chain-specific data, including the chain object, asset list, wallet details, and the user's address for the specified chain name. This example demonstrates how to call the hook and log the retrieved information.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/react/README.md#_snippet_4
+
+LANGUAGE: js
+CODE:
+```
+import { useChain } from '@interchain-kit/react';
+
+const chainName = 'cosmoshub';
+const { 
+  chain, // chain info for cosmoshub
+  assetList, // assets info for cosmoshub
+  address, // address for cosmoshub in keplr-extension wallet, it's string when connected, undefined when disconnected
+  wallet, // keplr extension wallet info
+  connect, // connect the wallet
+  disconnect, // disconnect the wallet
+  getRpcEndpoint, // type: const getRpcEndpoint: () => Promise<string | HttpEndpoint>
+  getSigningClient, // type: const getSigningClient: () => Promise<SigningClient>
+  message, // connection message
+  openView // open modal view
+} = useChain(chainName);
+```
+
+----------------------------------------
+
+TITLE: Accessing and using wallet methods (React)
+DESCRIPTION: This snippet demonstrates how to obtain the wallet object associated with a specific chain using the `useChain` hook. Once the wallet object is retrieved, you can call its methods, such as signing transactions (`signAmino`) or verifying messages (`verifyArbitrary`), to interact with the connected wallet.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/react/README.md#_snippet_6
+
+LANGUAGE: js
+CODE:
+```
+const { wallet } = useChain('osmosis')
+
+//use method from wallet that you select
+await wallet.signAmino(chainId, signAddress, stdDoc)
+await wallet.verifyArbitrary(chainId, signAddress, stdDoc)
+```
+
+----------------------------------------
+
+TITLE: Setting up ChainProvider with all chains (React)
+DESCRIPTION: This snippet shows an alternative configuration for `ChainProvider` where all mainnet chains and asset lists are imported from `@chain-registry/v2/mainnet`. This simplifies setup if your application needs to interact with a wide range of chains supported by the registry.
+SOURCE: https://github.com/hyperweb-io/interchain-kit/blob/main/packages/react/README.md#_snippet_3
+
+LANGUAGE: js
+CODE:
+```
+import { ChainProvider, useChain } from "@interchain-kit/react";
+import { keplrWallet } from "@interchain-kit/keplr-extension";
+import { ThemeProvider } from "@interchain-ui/react";
+import { chains, assetLists } from '@chain-registry/v2/mainnet';
+
+import "@interchain-ui/react/styles";
+ 
+const Show = () => {
+  const {address} = useChain('osmosis');
+  // will show cosmoshub address from what you selected wallet in modal
+  return <div>{address}</div>;
+};
+
+function App() {
+  return (
+    <ThemeProvider>
+      <ChainProvider
+        chains={chains}
+        assetLists={assetLists}
+        wallets={[keplrWallet]}
+        signerOptions={{}}
+        endpointOptions={{}}
+      >
+        <Show />
+      </ChainProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;
+```
+
+----------------------------------------
+
+TITLE: Using Chain Wallet Hooks for Multi-Chain Connections
+DESCRIPTION: Example of using useChainWallet hook to manage wallet connections for source and destination chains in a transfer scenario
+
+LANGUAGE: typescript
+CODE:
+import { useChainWallet } from '@interchain-kit/react';
+
+// Source chain wallet connection
+const {
+  address: sourceAddress,
+  connect: connectSourceChain,
+  chain: sourceChainInfo,
+} = useChainWallet(sourceChainName, keplrWalletName);
+
+// Destination chain wallet connection
+const {
+  address: destAddress,
+  connect: connectDestChain,
+  chain: destChainInfo,
+} = useChainWallet(destChainName, keplrWalletName);
+
+----------------------------------------
+
+TITLE: Wallet Manager for Chains And Wallet Management
+DESCRIPTION: Example of using useWalletManager hook to manage chains and wallet
+
+LANGUAGE: typescript
+CODE:
+import { useWalletManager } from '@interchain-kit/react';
+
+const { 
+  getChainLogoUrl, // type: const getChainLogoUrl: (chainName: ChainName) => string
+  chains, // all current chains in interchain kit context
+  assetLists, // all current assetLists in interchain kit context
+  currentChainName, 
+  currentWalletName,
+  addChains, // add new chains to interchain kit context, type: const addChains: (chains: Chain[], assetLists: AssetList[], signerOptions?: SignerOptions, endpointOptions?: EndpointOptions) => Promise<void>
+} = useWalletManager();
+
+----------------------------------------
+
+TITLE: Configuring Multiple Wallet Extensions with Interchain Kit
+DESCRIPTION: Example of setting up multiple wallet extensions (Keplr and Leap) using interchain-kit's extension modules
+
+LANGUAGE: typescript
+CODE:
+import { keplrExtensionInfo } from '@interchain-kit/keplr-extension';
+import { keplrWallet } from '@interchain-kit/keplr-extension';
+import { leapWallet } from '@interchain-kit/leap-extension';
+
+// Export Keplr wallet name for reference
+export const keplrWalletName = keplrExtensionInfo.name;
+// Configure multiple supported wallets
+export const wallets = [keplrWallet, leapWallet];
