@@ -9,9 +9,15 @@ Your task is to help implement Chain Registry in projects. You will work through
 2. Apply Chain Registry code properly
 3. Identify any missing dependencies, if there are any, go to step 4, otherwise stop the process
 4. Detect the project's package manager (npm, yarn, pnpm)
-5. Install the required packages
+5. Install ONLY the packages that are directly used in the code
 
+Remember to always follow the <constraints>.
 </instructions>
+
+<constraints>
+- Only implement exactly what's asked for.
+- Only install the dependencies that are directly used in the code.
+</constraints>
 
 <code-snippets>
 {{CHAIN_REGISTRY_SNIPPETS}}

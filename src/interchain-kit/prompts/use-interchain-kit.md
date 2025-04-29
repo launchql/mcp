@@ -11,10 +11,12 @@ Your task is to help implement Interchain Kit in projects. You will work through
 4. Detect the project's package manager (npm, yarn, pnpm)
 5. Install ONLY the packages that are directly used in the code
 
+Remember to always follow the <constraints>.
 </instructions>
 
 <constraints>
-- Just add exactly what's needed to implement the feature.
+- Only implement exactly what's asked for.
+- Assume the project is already set up with interchain-kit providers.
 - Only install the dependencies that are directly used in the code.
 </constraints>
 
