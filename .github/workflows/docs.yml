@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
+          cache: 'pnpm'
 
       - name: Clone docs repository
         run: git clone https://x-access-token:${{ secrets.GH_HYPERWEB_PAT }}@github.com/hyperweb-io/docs.hyperweb.io.git external-docs
