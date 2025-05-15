@@ -1,0 +1,89 @@
+# Getting Started with @hyperweb/mcp-server
+
+Welcome to the documentation for the Hyperweb MCP Server (`@hyperweb/mcp-server`). This server implements the Model Context Protocol (MCP) to help you use Hyperweb platform tools more effectively and easily with AI agents.
+
+## Overview
+
+The Agentic Tools MCP Server, also known as `@hyperweb/mcp-server`, provides a suite of functionalities focused on Cosmos SDK based chains and the broader interchain ecosystem. It allows for interactions with:
+
+- **Interchain Kit**: Tools related to interchain standards and protocols.
+- **Chain Registry**: Accessing and managing information about different chains.
+- **InterchainJS**: Leveraging JavaScript libraries for interchain operations.
+- **Starship**: Interacting with Starship, a unified deployment environment for Cosmos.
+
+This server aims to simplify common developer workflows and provide programmatic access to essential data and operations within the Hyperweb and Cosmos environments.
+
+## Setup
+
+To run the Hyperweb MCP server using npx, use the following command in your terminal:
+
+```bash
+npx -y @hyperweb/mcp-server@latest
+```
+
+This command will download and run the latest version of the server.
+
+## Usage with AI Clients (Cursor or Claude Desktop)
+
+To integrate the Hyperweb MCP Server with AI clients like Cursor or Claude Desktop, you need to add the following configuration to your client's settings. This allows the AI client to discover and use the tools provided by this MCP server.
+
+For more information, you can refer to the [Cursor MCP documentation](https://docs.cursor.com/context/model-context-protocol) or the [Claude Desktop MCP guide](https://modelcontextprotocol.io/quickstart/user).
+
+**Standard Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "hyperweb-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@hyperweb/mcp-server@latest"]
+    }
+  }
+}
+```
+
+**Windows Alternative Configuration:**
+
+If you are on Windows, you might need to use this alternative configuration:
+
+```json
+{
+  "mcpServers": {
+    "hyperweb-mcp-server": {
+      "command": "cmd",
+      "args": ["/k", "npx", "-y", "@hyperweb/mcp-server@latest"]
+    }
+  }
+}
+```
+
+## Available Tools
+
+This server provides a range of tools to assist with development in the Hyperweb and Cosmos ecosystems. For a detailed list of all available tools, their descriptions, and parameters, please refer to the [API Reference](./references).
+
+Key areas covered by the tools include:
+
+- Chain Registry interactions (`useChainRegistry`)
+- Interchain Kit usage and migration (`useInterchainKit`, `migrateFromCosmosKitToInterchainKit`)
+- InterchainJS usage and migration (`useInterchainjs`, `migrateToInterchainjs`)
+- Starship environment setup and configuration (`setupStarship`, `generateStarshipConfig`, `verifyStarshipConfig`)
+
+## Development
+
+If you plan to contribute or modify the server:
+
+### Available Scripts
+
+- `pnpm build` - Build the project and copy prompts to build directory
+- `pnpm clean` - Clean build artifacts
+- `pnpm test` - Run tests
+- `pnpm inspector` - Run the MCP inspector with the server
+- `pnpm format` - Format code using Biome
+- `pnpm lint` - Lint code using Biome
+
+### Key Technologies
+
+- **TypeScript**: For static typing and modern JavaScript features.
+- **Biome**: For linting and formatting.
+- **Model Context Protocol SDK**: For AI model interactions.
+- **Zod**: For runtime type validation.

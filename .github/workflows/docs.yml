@@ -1,0 +1,65 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'learn/**'
+      - '.github/workflows/docs.yml'
+  # Allow manual triggering
+  workflow_dispatch:
+
+# Prevent concurrent deployments to avoid conflicts
+concurrency:
+  group: docs-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Repository specific variables
+  REPO_NAME: agentic-tools
+  DOCS_DEST_PATH: pages/mcp-server
+  LEARN_DEST_PATH: src/data/learn/mcp-server
+  NODE_VERSION: '20'
+
+jobs:
+  docs-deploy:
+    name: Sync and Deploy Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Clone docs repository
+        run: git clone https://x-access-token:${{ secrets.GH_HYPERWEB_PAT }}@github.com/hyperweb-io/docs.hyperweb.io.git external-docs
+
+      - name: Sync the docs and build
+        run: |
+          rsync -av --delete ./docs/ ./external-docs/${{ env.DOCS_DEST_PATH }}/
+          cd external-docs
+          yarn install
+          yarn export
+
+      - name: Git push
+        run: |
+          cd external-docs
+          git config user.name 'GitHub Action'
+          git config user.email 'action@github.com'
+          git add .
+          if git diff --cached --quiet; then
+              echo "No changes to commit."
+          else
+              git commit -m "Automated: Update ${{ env.REPO_NAME }} documentation"
+              git push
+          fi
