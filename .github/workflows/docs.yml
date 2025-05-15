@@ -22,6 +22,7 @@ env:
   DOCS_DEST_PATH: pages/mcp-server
   LEARN_DEST_PATH: src/data/learn/mcp-server
   NODE_VERSION: '20'
+  PNPM_VERSION: '10' # Or your desired pnpm version
 
 jobs:
   docs-deploy:
@@ -35,11 +36,19 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Clone docs repository
         run: git clone https://x-access-token:${{ secrets.GH_HYPERWEB_PAT }}@github.com/hyperweb-io/docs.hyperweb.io.git external-docs
@@ -48,7 +57,7 @@ jobs:
         run: |
           rsync -av --delete ./docs/ ./external-docs/${{ env.DOCS_DEST_PATH }}/
           cd external-docs
-          yarn install
+          yarn install # This is for the external-docs repo, which uses yarn
           yarn export
 
       - name: Git push
