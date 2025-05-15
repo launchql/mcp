@@ -1,8 +1,8 @@
 # Getting Started with @hyperweb/mcp-server
 
-Welcome to the documentation for the Hyperweb MCP Server (`@hyperweb/mcp-server`). This server implements the Model Context Protocol (MCP) to help you use Hyperweb platform tools more effectively and easily with AI agents.
+Welcome to the documentation for the Hyperweb MCP Server (`@hyperweb/mcp-server`). The Hyperweb MCP Server is a [Model Context Protocol](https://modelcontextprotocol.io/introduction) server that provides seemless integration with Web3 tools in Hyperweb Ecosystem and Cosmos Ecosystem, enabling advanced interaction capabilities with AI agents for developers.
 
-## Overview
+## Use Cases
 
 The Agentic Tools MCP Server, also known as `@hyperweb/mcp-server`, provides a suite of functionalities focused on Cosmos SDK based chains and the broader interchain ecosystem. It allows for interactions with:
 
@@ -13,21 +13,24 @@ The Agentic Tools MCP Server, also known as `@hyperweb/mcp-server`, provides a s
 
 This server aims to simplify common developer workflows and provide programmatic access to essential data and operations within the Hyperweb and Cosmos environments.
 
-## Setup
+## Prerequisites
 
-To run the Hyperweb MCP server using npx, use the following command in your terminal:
+Development:
 
-```bash
-npx -y @hyperweb/mcp-server@latest
-```
+- Node.js (v20 or higher)
+- pnpm (v10 or higher)
 
-This command will download and run the latest version of the server.
+MCP server use:
+
+- Any IDE or editor that supports MCP protocol, for example [Cursor](https://docs.cursor.com/context/model-context-protocol), [Windsurf](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) or [Claude Desktop](https://modelcontextprotocol.io/quickstart/user)
 
 ## Usage with AI Clients (Cursor or Claude Desktop)
 
 To integrate the Hyperweb MCP Server with AI clients like Cursor or Claude Desktop, you need to add the following configuration to your client's settings. This allows the AI client to discover and use the tools provided by this MCP server.
 
-For more information, you can refer to the [Cursor MCP documentation](https://docs.cursor.com/context/model-context-protocol) or the [Claude Desktop MCP guide](https://modelcontextprotocol.io/quickstart/user).
+We will demonstrate the usage of the Hyperweb MCP Server with Cursor/Claude Desktop in this guide.
+
+For more information, you can refer to the [Cursor MCP documentation](https://docs.cursor.com/context/model-context-protocol), [Windsurf MCP guide](https://docs.windsurf.com/windsurf/cascade/mcp#model-context-protocol-mcp) or the [Claude Desktop MCP guide](https://modelcontextprotocol.io/quickstart/user).
 
 **Standard Configuration:**
 
@@ -36,7 +39,7 @@ For more information, you can refer to the [Cursor MCP documentation](https://do
   "mcpServers": {
     "hyperweb-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@hyperweb/mcp-server@latest"]
+      "args": ["-y", "@hyperweb/mcp-server@latest"] // Make sure to use the latest version
     }
   }
 }
@@ -51,11 +54,15 @@ If you are on Windows, you might need to use this alternative configuration:
   "mcpServers": {
     "hyperweb-mcp-server": {
       "command": "cmd",
-      "args": ["/k", "npx", "-y", "@hyperweb/mcp-server@latest"]
+      "args": ["/k", "npx", "-y", "@hyperweb/mcp-server@latest"] // Make sure to use the latest version
     }
   }
 }
 ```
+
+After setting up the configuration, the MCP server will be available in the MCP clients (Cursor/Claude Desktop) and you will be able to interact with it through normal prompting.
+
+The context will be detected and injected into the context of your conversation with AI agents and the tools will be available for use.
 
 ## Available Tools
 
