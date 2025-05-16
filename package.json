@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc && npm run copy-prompts && chmod 755 build/index.js",
     "copy-prompts": "./scripts/copy-prompts.sh",
+    "categorize-snippets": "tsx src/interchainjs/scripts/categorize-snippets.ts",
     "clean": "rimraf build",
     "test": "vitest",
     "test:watch": "vitest --watch",
