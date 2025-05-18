@@ -176,3 +176,47 @@ CODE:
 ```
 {"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
 ```
+
+----------------------------------------
+
+TITLE: Getting ETH Balance Using SignerFromBrowser
+DESCRIPTION: Shows how to fetch the ETH balance of the connected wallet using SignerFromBrowser and format it.
+SOURCE: ethereum
+
+LANGUAGE: typescript
+CODE:
+import { SignerFromBrowser } from "@interchainjs/ethereum/signers/SignerFromBrowser"
+import { formatEther } from "@interchainjs/ethereum/utils/denominations"
+
+declare const ethereum: MetaMaskInpageProvider
+
+const wallet = new SignerFromBrowser(ethereum)
+const balance = await wallet.getBalance()
+const formattedBalance = formatEther(balance) // Converts to ETH from Wei
+
+----------------------------------------
+
+TITLE: Sending ETH Transaction Using SignerFromBrowser
+DESCRIPTION: Demonstrates how to send an ETH transaction to another address using SignerFromBrowser, including parsing the amount and waiting for confirmation.
+SOURCE: ethereum
+
+LANGUAGE: typescript
+CODE:
+import { SignerFromBrowser } from "@interchainjs/ethereum/signers/SignerFromBrowser"
+import { parseEther } from "@interchainjs/ethereum/utils/denominations"
+
+declare const ethereum: MetaMaskInpageProvider
+declare const recipient: string
+declare const amount: number
+
+const signer = new SignerFromBrowser(ethereum)
+
+// Create and send transaction
+const tx = { 
+  to: recipient, 
+  value: parseEther(amount) // Converts ETH to Wei
+}
+const transaction = await signer.send(tx)
+
+// Wait for confirmation
+await transaction.wait()
