@@ -219,4 +219,22 @@ const tx = {
 const transaction = await signer.send(tx)
 
 // Wait for confirmation
-await transaction.wait()
+const {
+  transactionHash, // string
+  transactionIndex, // string
+  blockHash, // string
+  blockNumber, // string
+  from, // string
+  to, // string | null
+  cumulativeGasUsed, // string
+  gasUsed, // string
+  contractAddress, // string | null
+  logs, // TransactionLog[]
+  logsBloom, // string
+  status?, // string
+  effectiveGasPrice?, // string
+  type?, // string
+} = await transaction.wait()
+
+// Get txHash
+console.log(transaction.txHash)
