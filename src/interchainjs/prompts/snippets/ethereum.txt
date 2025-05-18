@@ -1,0 +1,240 @@
+TITLE: Sending Transaction with Browser Signer (TypeScript)
+DESCRIPTION: Initializes a signer using the browser's Ethereum provider (like MetaMask) and sends a transaction to a recipient with a specified value. It waits for the transaction receipt. Requires `@interchainjs/ethereum` and a browser environment with `window.ethereum` available.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_7
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { SignerFromBrowser } from "@interchainjs/ethereum/signers/SignerFromBrowser"
+const signer = new SignerFromBrowser(window.ethereum)
+const tx = await signer.send({
+  to: recipientAddress,
+  value: BigInt(10**18),
+})
+const receipt = await tx.wait()
+```
+
+----------------------------------------
+
+TITLE: Deploying Smart Contract with Private Key Signer (TypeScript)
+DESCRIPTION: Deploys a smart contract by sending a legacy transaction with the contract bytecode as data to the zero address. It waits for the transaction receipt and logs the deployed contract address. Requires an initialized `SignerFromPrivateKey` instance and compiled contract bytecode.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_4
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Deploy a smart contract
+const bytecode = '0x...'; // compiled contract bytecode
+const { txHash: deployHash, wait: deployWait } = await signer.sendLegacyTransactionAutoGasLimit(
+  '',
+  0n,
+  bytecode
+)
+const deployReceipt = await deployWait()
+console.log('Contract deployed at:', deployReceipt.contractAddress)
+```
+
+----------------------------------------
+
+TITLE: Interacting with Smart Contract (ERC20 Transfer) (TypeScript)
+DESCRIPTION: Demonstrates interacting with a deployed smart contract, specifically performing an ERC20 token transfer. It uses `ContractEncoder` to encode the function call data and sends a legacy transaction to the contract address. Requires an initialized `SignerFromPrivateKey`, the contract ABI, and the contract address.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_5
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Interact with a deployed contract (transfer ERC20 tokens)
+import { ContractEncoder } from "@interchainjs/ethereum/utils/ContractEncoder"
+const abi = [ /* ERC20 contract ABI */ ]
+const contractAddress = deployReceipt.contractAddress
+const contract = new ContractEncoder(abi)
+const dataHex = contract.transfer(recipientAddress, 1000000n)
+const { txHash: tokenHash, wait: tokenWait } = await signer.sendLegacyTransactionAutoGasLimit(
+  contractAddress,
+  0n,
+  dataHex
+)
+const tokenReceipt = await tokenWait()
+console.log('Token transfer receipt:', tokenReceipt)
+```
+
+----------------------------------------
+
+TITLE: Using SignerFromPrivateKey Methods (TypeScript)
+DESCRIPTION: Demonstrates how to retrieve the signer's address, current balance, and transaction count (nonce). It also shows sending both legacy and EIP-1559 transactions with automatic gas limit/settings and signing/verifying a personal message. Requires an initialized `SignerFromPrivateKey` instance.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_2
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Get the address and current balance
+type Address = string
+const address: Address = signer.getAddress()
+console.log("Address:", address)
+
+const balance: bigint = await signer.getBalance()
+console.log("Balance (wei):", balance)
+
+// Get the current nonce
+const nonce: number = await signer.getNonce()
+console.log("Nonce:", nonce)
+
+// Send a legacy transaction with automatic gas limit
+const { txHash: legacyHash, wait: legacyWait } = await signer.sendLegacyTransactionAutoGasLimit(
+  recipientAddress,
+  1000000000000000n, // 0.001 ETH
+  '0x'
+)
+const legacyReceipt = await legacyWait()
+console.log("Legacy tx receipt:", legacyReceipt)
+
+// Send an EIP-1559 transaction with automatic gas settings
+const { txHash: eipHash, wait: eipWait } = await signer.sendEIP1559TransactionAutoGasLimit(
+  recipientAddress,
+  1000000000000000n // 0.001 ETH
+)
+const eipReceipt = await eipWait()
+console.log("EIP-1559 tx receipt:", eipReceipt)
+
+// Sign and verify a personal message
+const message: string = "Hello, Ethereum!"
+const signature: string = signer.personalSign(message)
+console.log("Signature:", signature)
+
+const isValid: boolean = SignerFromPrivateKey.verifyPersonalSignature(
+  message,
+  signature,
+  address
+)
+console.log("Signature valid:", isValid)
+}
+```
+
+----------------------------------------
+
+TITLE: Monitoring Contract Events via WebSocket (TypeScript)
+DESCRIPTION: Sets up a WebSocket connection to monitor events emitted by a specific smart contract. It uses `WebSocketContractMonitor` to connect to a WebSocket URL and listen for 'Transfer' events, logging them when received. Requires `@interchainjs/ethereum`, the contract address, ABI, and a WebSocket endpoint URL.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_6
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Monitor contract events via WebSocket
+import { WebSocketContractMonitor } from "@interchainjs/ethereum/providers/WebSocketContractMonitor"
+const wsUrl = 'ws://127.0.0.1:8546'
+const monitor = new WebSocketContractMonitor(contractAddress, abi, wsUrl)
+await monitor.connect()
+monitor.on('Transfer', (event) => {
+  console.log('Transfer event:', event)
+})
+```
+
+----------------------------------------
+
+TITLE: Sending EIP-1559 Transaction with Private Key Signer (TypeScript)
+DESCRIPTION: Initializes a signer using a private key and RPC URL, then sends an EIP-1559 transaction with automatic gas limit calculation to a specified recipient and amount. It waits for the transaction receipt. Requires `@interchainjs/ethereum` and a valid private key/RPC URL.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { SignerFromPrivateKey } from "@interchainjs/ethereum/signers/SignerFromPrivateKey"
+const signer = new SignerFromPrivateKey(privateKey, RPC_URL)
+const { txHash, wait } = await signer.sendEIP1559TransactionAutoGasLimit(
+  recipientAddress,
+  amount
+)
+const receipt = await wait()
+```
+
+----------------------------------------
+
+TITLE: Estimating Transaction Gas with Private Key Signer (TypeScript)
+DESCRIPTION: Uses the signer to estimate the gas required for a potential transaction to a recipient with a specific value and optional data. This helps determine the cost before sending the transaction. Requires an initialized `SignerFromPrivateKey` instance.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/README.md#_snippet_3
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Estimate gas for an arbitrary transaction
+const estimatedGas: bigint = await signer.estimateGas(
+  recipientAddress,
+  500000000000000000n, // 0.5 ETH
+  '0x'               // optional data
+)
+console.log('Estimated gas:', estimatedGas.toString())
+```
+
+----------------------------------------
+
+TITLE: Subscribe to New Ethereum Heads (JSON)
+DESCRIPTION: Sends a JSON-RPC request over a websocket connection to subscribe to new block headers from the Ethereum node.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/ethereum/starship/README.md#_snippet_7
+
+LANGUAGE: json
+CODE:
+```
+{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+```
+
+----------------------------------------
+
+TITLE: Getting ETH Balance Using SignerFromBrowser
+DESCRIPTION: Shows how to fetch the ETH balance of the connected wallet using SignerFromBrowser and format it.
+SOURCE: ethereum
+
+LANGUAGE: typescript
+CODE:
+import { SignerFromBrowser } from "@interchainjs/ethereum/signers/SignerFromBrowser"
+import { formatEther } from "@interchainjs/ethereum/utils/denominations"
+
+declare const ethereum: MetaMaskInpageProvider
+
+const wallet = new SignerFromBrowser(ethereum)
+const balance = await wallet.getBalance()
+const formattedBalance = formatEther(balance) // Converts to ETH from Wei
+
+----------------------------------------
+
+TITLE: Sending ETH Transaction Using SignerFromBrowser
+DESCRIPTION: Demonstrates how to send an ETH transaction to another address using SignerFromBrowser, including parsing the amount and waiting for confirmation.
+SOURCE: ethereum
+
+LANGUAGE: typescript
+CODE:
+import { SignerFromBrowser } from "@interchainjs/ethereum/signers/SignerFromBrowser"
+import { parseEther } from "@interchainjs/ethereum/utils/denominations"
+
+declare const ethereum: MetaMaskInpageProvider
+declare const recipient: string
+declare const amount: number
+
+const signer = new SignerFromBrowser(ethereum)
+
+// Create and send transaction
+const tx = { 
+  to: recipient, 
+  value: parseEther(amount) // Converts ETH to Wei
+}
+const transaction = await signer.send(tx)
+
+// Wait for confirmation
+const {
+  transactionHash, // string
+  transactionIndex, // string
+  blockHash, // string
+  blockNumber, // string
+  from, // string
+  to, // string | null
+  cumulativeGasUsed, // string
+  gasUsed, // string
+  contractAddress, // string | null
+  logs, // TransactionLog[]
+  logsBloom, // string
+  status?, // string
+  effectiveGasPrice?, // string
+  type?, // string
+} = await transaction.wait()
+
+// Get txHash
+console.log(transaction.txHash)

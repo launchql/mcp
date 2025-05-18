@@ -1,0 +1,945 @@
+TITLE: InterchainJS Transaction Signing and Broadcasting (TypeScript)
+DESCRIPTION: Shows how to sign and broadcast a transaction using an InterchainJS DirectSigner instance (assumes signer is already initialized). It constructs the message, defines fee and memo, and uses the signer's signAndBroadcast method.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_7
+
+LANGUAGE: typescript
+CODE:
+```
+import { DirectSigner } from '@interchainjs/cosmos/signers/direct';
+
+(async () => {
+  // Assume wallet generation using InterchainJS methods as shown earlier has been completed.
+  
+  const msg = {
+    // Construct your message here using @interchainjs/cosmos-types
+  };
+  const fee = {
+    amount: [{ denom: 'uatom', amount: '5000' }],
+    gas: '200000',
+  };
+  const memo = "InterchainJS transaction test";
+  
+  const result = await signer.signAndBroadcast({
+    messages: [msg], fee, memo
+  });
+  console.log("Transaction hash:", result.hash);
+})();
+```
+
+----------------------------------------
+
+TITLE: Constructing Secp256k1HDWallet from Mnemonic in TypeScript
+DESCRIPTION: Demonstrates how to initialize a Secp256k1HDWallet instance using a mnemonic phrase and specifying multiple HD paths to derive different accounts. Requires the Secp256k1HDWallet and HDPath classes.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/wallet.md#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { Secp256k1HDWallet } from "@interchainjs/cosmos/wallets/secp256k1hd";
+import { HDPath } from "@interchainjs/types";
+
+// init wallet with two accounts using two hd paths
+const wallet = Secp256k1HDWallet.fromMnemonic(
+  "<MNEMONIC_WORDS>",
+  // use cosmos hdpath built by HDPath
+  // we can get cosmos hdpath "m/44'/118'/0'/0/0" and "m/44'/118'/0/0/1" by this:
+  [0, 1].map((i) => ({
+    prefix: "cosmos",
+    hdPath: HDPath.cosmos(0, 0, i).toString(),
+  }))
+);
+```
+
+----------------------------------------
+
+TITLE: Initializing Cosmos DirectSigner with Wallet (TypeScript)
+DESCRIPTION: This snippet illustrates how to initialize a DirectSigner for Cosmos using a Wallet object. It requires importing relevant types and utilities, creating a Secp256k1HDWallet instance from a mnemonic with a specified HD path and prefix, and then using the static fromWallet method of DirectSigner.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#_snippet_2
+
+LANGUAGE: ts
+CODE:
+```
+import { DirectSigner } from "@interchainjs/cosmos/signers/direct";
+import { DirectWallet, SignDoc } from "@interchainjs/cosmos/types";
+import { toEncoder } from "@interchainjs/cosmos/utils";
+import { MsgSend } from "@interchainjs/cosmos-types/cosmos/bank/v1beta1/tx";
+import { HDPath } from "@interchainjs/types";
+
+const directWallet = Secp256k1HDWallet.fromMnemonic("<MNEMONIC_WORDS>", [
+  {
+    // bech32_prefix
+    prefix: "cosmos",
+    // use cosmos hdpath built by HDPath
+    // we can get cosmos hdpath "m/44'/118'/0'/0/0" by this:
+    hdPath: HDPath.cosmos().toString(),
+  },
+]);
+const signer = await DirectSigner.fromWallet(wallet, [toEncoder(MsgSend)], <RPC_ENDPOINT>);
+```
+
+----------------------------------------
+
+TITLE: Converting Wallet to OfflineDirectSigner in TypeScript
+DESCRIPTION: Shows how to obtain an OfflineDirectSigner instance from a Secp256k1HDWallet to perform direct signing operations while abstracting away the private key. It also demonstrates retrieving an account address from the signer.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/wallet.md#_snippet_2
+
+LANGUAGE: TypeScript
+CODE:
+```
+protoSigner = wallet.toOfflineDirectSigner();
+address = (await protoSigner.getAccounts())[0].address;
+```
+
+----------------------------------------
+
+TITLE: Initializing Cosmos DirectSigner with Auth (TypeScript)
+DESCRIPTION: This example demonstrates how to create a DirectSigner instance for Cosmos using an Auth object. It involves importing necessary modules, creating a Secp256k1Auth instance from a mnemonic with a specified HD path, and then instantiating the DirectSigner with the auth object, message encoders, and an RPC endpoint.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#_snippet_1
+
+LANGUAGE: ts
+CODE:
+```
+import { DirectSigner } from "@interchainjs/cosmos/signers/direct";
+import { toEncoder } from "@interchainjs/cosmos/utils";
+import { Secp256k1Auth } from "@interchainjs/auth/secp256k1";
+import { MsgSend } from "@interchainjs/cosmos-types/cosmos/bank/v1beta1/tx";
+import {
+  HDPath
+} from '@interchainjs/types';
+
+
+const [auth] = Secp256k1Auth.fromMnemonic("<MNEMONIC_WORDS>", [
+    // use cosmos hdpath built by HDPath
+    // we can get cosmos hdpath "m/44'/118'/0'/0/0" by this:
+    HDPath.cosmos().toString(),
+]);
+const signer = new DirectSigner(auth, [toEncoder(MsgSend)], <RPC_ENDPOINT>);
+```
+
+----------------------------------------
+
+TITLE: Derive Cosmos HD Path and Create Secp256k1 Auth (TypeScript)
+DESCRIPTION: Illustrates how to use the HDPath utility from @interchainjs/types to derive the default Cosmos HD path ('m/44'/118'/0'/0/0'). It shows that using HDPath.cosmos().toString() is equivalent to providing the hardcoded path string when creating a Secp256k1Auth instance from a mnemonic.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/packages/auth/README.md#_snippet_2
+
+LANGUAGE: ts
+CODE:
+```
+import { HDPath } from "@interchainjs/types";
+
+// derive with Cosmos default HD path "m/44'/118'/0'/0/0"
+const [auth] = Secp256k1Auth.fromMnemonic("<MNEMONIC_WORDS>", [
+  // use cosmos hdpath built by HDPath
+  // we can get cosmos hdpath "m/44'/118'/0'/0/0" by this:
+  HDPath.cosmos().toString(),
+]);
+// is identical to
+const [auth] = Secp256k1Auth.fromMnemonic("<MNEMONIC_WORDS>", [
+  "m/44'/118'/0'/0/0",
+]);
+```
+
+----------------------------------------
+
+TITLE: UniSigner Interface Definition (TypeScript)
+DESCRIPTION: This code block shows the core definition of the UniSigner interface, highlighting its three primary methods: signArbitrary for general data signing, signDoc for signing structured documents efficient for on-chain verification, and sign for signing human-readable messages or transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#_snippet_3
+
+LANGUAGE: ts
+CODE:
+```
+/** you can import { UniSigner } from "@interchainjs/types" */
+export interface UniSigner<SignDoc, Tx> {
+  ...
+  signArbitrary(data: Uint8Array): IKey;
+  signDoc: (doc: SignDoc) => Promise<SignDocResponse<SignDoc>>;
+  sign(
+    messages: unknown,
+    ...args: unknown[]
+  ): Promise<SignResponse<SignDoc, Tx>>;
+  ...
+}
+```
+
+----------------------------------------
+
+TITLE: Using DirectSigner for Transaction Signing and Broadcasting
+DESCRIPTION: Shows the pattern for using the DirectSigner instance (assumed to be created previously) to build a transaction message, optionally set fee and memo, and then sign and broadcast the transaction using the `signAndBroadcast` method provided by the InterchainJS Cosmos SDK.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { DirectSigner } from '@interchainjs/cosmos/signers/direct';
+// (Wallet generation code as shown above is assumed to have been run)
+
+// Build your transaction message (e.g., a bank message)
+const msg = {
+  // Construct your message based on the schema from @interchainjs/cosmos-types
+};
+
+// Optionally, set fee and memo information
+const fee = {
+  amount: [
+    {
+      denom: 'uatom',
+      amount: '5000',
+    },
+  ],
+  gas: '200000',
+};
+
+// Sign and broadcast the transaction
+const result = await signer.signAndBroadcast([msg], {
+  fee,
+  memo: 'migration transaction test',
+});
+console.log('Transaction hash:', result.hash);
+```
+
+----------------------------------------
+
+TITLE: InterchainJS Wallet Generation (TypeScript)
+DESCRIPTION: Illustrates how to generate a mnemonic and derive a Secp256k1Auth object using InterchainJS's Bip39, Random, Secp256k1Auth, and HDPath modules, then retrieves the wallet address.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_5
+
+LANGUAGE: typescript
+CODE:
+```
+import { Secp256k1Auth } from '@interchainjs/auth/secp256k1';
+import { HDPath } from '@interchainjs/types';
+import { Bip39, Random } from '@interchainjs/crypto';
+
+(async () => {
+  const mnemonic = Bip39.encode(Random.getBytes(16)).toString();
+  const [auth] = Secp256k1Auth.fromMnemonic(mnemonic, [
+    HDPath.cosmos(0, 0, 0).toString(),
+  ]);
+  console.log("Wallet address:", await auth.getAddress());
+})();
+```
+
+----------------------------------------
+
+TITLE: Create Secp256k1 Auth from Mnemonic and Sign (TypeScript)
+DESCRIPTION: Demonstrates how to import the Secp256k1Auth class, create an authentication instance from a generated mnemonic and a specific HD path, sign a sample byte array, and print the resulting signature in hexadecimal format.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/packages/auth/README.md#_snippet_1
+
+LANGUAGE: ts
+CODE:
+```
+import { Secp256k1Auth } from "@interchainjs/auth/secp256k1";
+
+const [directAuth] = Secp256k1Auth.fromMnemonic(generateMnemonic(), [
+  "m/44'/118'/0'/0/0",
+]);
+const signature = auth.sign(Uint8Array.from([1, 2, 3]));
+console.log(signature.toHex());
+```
+
+----------------------------------------
+
+TITLE: Defining Auth and Wallet Interfaces with Sign Methods (TypeScript)
+DESCRIPTION: Defines the TypeScript interfaces for `Auth` and `Wallet`. The `Auth` interface includes a generic `sign` method for binary data, while the `Wallet` interface provides specific asynchronous methods (`signDirect`, `signAmino`) for signing structured Cosmos transaction documents, catering to different signing requirements, especially for Web3 wallets.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/auth.md#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+/** you can import { Auth, Wallet } from "@interchainjs/types" */
+
+export interface Auth {
+  ...,
+  sign: (data: Uint8Array) => Signature;
+}
+
+export interface Wallet<Account, SignDoc> {
+  ...,
+  async signDirect(
+    signerAddress: string,
+    signDoc: CosmosDirectDoc
+  ): Promise<DirectSignResponse>;
+  async signAmino(
+    signerAddress: string,
+    signDoc: CosmosAminoDoc
+  ): Promise<AminoSignResponse>;
+}
+```
+
+----------------------------------------
+
+TITLE: Defining Eip712Signer Class (TypeScript)
+DESCRIPTION: Starts the definition of the `Eip712Signer` class, which implements the `UniEip712Signer` interface for signing and broadcasting Ethereum transactions using EIP-712. It outlines the constructor parameters (`auth`, `endpoint`) and properties (`provider`, `docAuth`), and includes a static factory method `fromWallet`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_8
+
+LANGUAGE: typescript
+CODE:
+```
+import { Auth } from "@interchainjs/types";
+import { Provider } from "ethers";
+import { IEthereumGenericOfflineSigner } from "./wallet";
+import { UniEip712Signer } from "./types";
+import { Eip712DocAuth } from "./auth";
+
+export class Eip712Signer implements UniEip712Signer {
+  provider: Provider;
+  docAuth: Eip712DocAuth;
+
+  constructor(auth: Auth, endpoint: string) {
+    // ... constructor logic ...
+  }
+
+  static async fromWallet(signer: IEthereumGenericOfflineSigner, endpoint?: string) {
+    // ... static method logic ...
+  }
+
+  // ... other methods (sign, broadcast, etc.) ...
+}
+```
+
+----------------------------------------
+
+TITLE: Converting Bech32 and Hex Addresses in JavaScript
+DESCRIPTION: This snippet demonstrates converting a hex string representation of an address to a bech32 string using `toBech32` and `fromHex`, and converting a bech32 string back to its hex representation using `fromBech32` and `toHex`. It shows the round trip conversion process.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/packages/encoding/README.md#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+>> toBech32("tiov", fromHex("1234ABCD0000AA0000FFFF0000AA00001234ABCD"))
+'tiov1zg62hngqqz4qqq8lluqqp2sqqqfrf27dzrrmea'
+>> toHex(fromBech32("tiov1zg62hngqqz4qqq8lluqqp2sqqqfrf27dzrrmea").data)
+'1234abcd0000aa0000ffff0000aa00001234abcd'
+```
+
+----------------------------------------
+
+TITLE: Implementing ByteAuth with Secp256k1 - TypeScript
+DESCRIPTION: Shows a placeholder for implementing the ByteAuth interface using the secp256k1 algorithm, suitable for signing arbitrary byte arrays.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+export class Secp256k1Auth implements ByteAuth<RecoveredSignatureType> {
+  // Implementation details...
+}
+```
+
+----------------------------------------
+
+TITLE: Defining UniEip712Signer Interface (TypeScript)
+DESCRIPTION: Defines the `UniEip712Signer` interface by extending `UniSigner` and specifying the types used for EIP-712 signing, including transaction requests, serialized transactions, sign documents, addresses, broadcast responses, broadcast options, and sign document responses.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_6
+
+LANGUAGE: typescript
+CODE:
+```
+import { UniSigner } from "@interchainjs/types";
+import { TransactionRequest, TransactionResponse } from "ethers";
+
+export type UniEip712Signer = UniSigner<
+  TransactionRequest,
+  string,
+  TransactionRequest,
+  string,
+  TransactionResponse,
+  unknown,
+  string
+>;
+```
+
+----------------------------------------
+
+TITLE: Implementing EIP-712 Signer Class in TypeScript
+DESCRIPTION: This class implements the `UniEip712Signer` interface to provide methods for signing and broadcasting Ethereum transactions using the EIP-712 standard. It utilizes an `Eip712DocAuth` instance for signing and an Ethers `Provider` for broadcasting. It includes methods for getting the address, signing documents, signing and broadcasting, and broadcasting signed transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_9
+
+LANGUAGE: typescript
+CODE:
+```
+import {
+  IKey,
+  SignDocResponse,
+  SignResponse,
+  BroadcastOptions,
+  Auth,
+  isDocAuth,
+  HttpEndpoint,
+} from "@interchainjs/types";
+import {
+  JsonRpcProvider,
+  Provider,
+  TransactionRequest,
+  TransactionResponse,
+} from "ethers";
+import { UniEip712Signer } from "../types";
+import { Eip712DocAuth } from "../types/docAuth";
+import { IEthereumGenericOfflineSigner } from "../types/wallet";
+
+// Eip712Signer Class: Implements the UniEip712Signer interface to handle signing and broadcasting Ethereum transactions using EIP-712.
+export class Eip712Signer implements UniEip712Signer {
+  provider: Provider;
+  docAuth: Eip712DocAuth;
+
+  // Constructor: Initializes the provider and docAuth properties.
+  constructor(auth: Auth, public endpoint: string) {
+    this.provider = new JsonRpcProvider(endpoint);
+    this.docAuth = auth as Eip712DocAuth;
+  }
+
+  // Creates an Eip712Signer from a wallet.
+  // If there are multiple accounts in the wallet, it will return the first one by default.
+  static async fromWallet(
+    signer: IEthereumGenericOfflineSigner,
+    endpoint?: string
+  ) {
+    const auth = await Eip712DocAuth.fromOfflineSigner(signer);
+
+    return new Eip712Signer(auth, endpoint);
+  }
+
+  // Retrieves the Ethereum address from the docAuth instance.
+  async getAddress(): Promise<string> {
+    return this.docAuth.address;
+  }
+
+  // Not supported in this implementation; throws an error.
+  signArbitrary(data: Uint8Array): IKey | Promise<IKey> {
+    throw new Error("Method not supported.");
+  }
+
+  // Uses docAuth.signDoc to sign the TransactionRequest document.
+  async signDoc(doc: TransactionRequest): Promise<string> {
+    return this.docAuth.signDoc(doc);
+  }
+
+  // Not supported in this implementation; throws an error.
+  broadcastArbitrary(
+    data: Uint8Array,
+    options?: unknown
+  ): Promise<TransactionResponse> {
+    throw new Error("Method not supported.");
+  }
+
+  // Calls signDoc to get the signed transaction (tx).
+  // Returns a SignResponse object containing the signed transaction, original document, and a broadcast function.
+  async sign(
+    args: TransactionRequest
+  ): Promise<
+    SignResponse<
+      string,
+      TransactionRequest,
+      TransactionResponse,
+      BroadcastOptions
+    >
+  > {
+    const result = await this.signDoc(args);
+
+    return {
+      tx: result,
+      doc: args,
+      broadcast: async () => {
+        return this.provider.broadcastTransaction(result);
+      },
+    };
+  }
+
+  // Calls signDoc to sign the transaction and broadcasts it using provider.broadcastTransaction.
+  async signAndBroadcast(
+    args: TransactionRequest
+  ): Promise<TransactionResponse> {
+    const result = await this.signDoc(args);
+
+    return this.provider.broadcastTransaction(result);
+  }
+
+  // Broadcasts a signed transaction (hex string) using provider.broadcastTransaction.
+  broadcast(tx: string): Promise<TransactionResponse> {
+    return this.provider.broadcastTransaction(tx);
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Implementing the AminoSigner Class - TypeScript
+DESCRIPTION: Provides the structure for the AminoSigner class, which extends AminoSignerBase and implements CosmosAminoSigner. It shows how the signer is initiated, how to get the transaction builder, how to get account information, and a static method for creating the signer from a wallet.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_4
+
+LANGUAGE: TypeScript
+CODE:
+```
+export class AminoSigner
+  extends AminoSignerBase<CosmosAminoDoc>
+  implements CosmosAminoSigner
+{
+  // Initiated by an Auth, ByteAuth, or DocAuth
+  constructor(
+    auth: Auth,
+    encoders: Encoder[],
+    converters: AminoConverter[],
+    endpoint?: string | HttpEndpoint,
+    options?: SignerOptions
+  ) {
+    super(auth, encoders, converters, endpoint, options);
+  }
+
+  // Get the transaction builder
+  getTxBuilder(): BaseCosmosTxBuilder<CosmosAminoDoc> {
+    return new AminoTxBuilder(new BaseCosmosTxBuilderContext(this));
+  }
+
+  // Get account information
+  async getAccount() {
+    // Implementation details...
+  }
+
+  // Create AminoSigner from a wallet (returns the first account by default)
+  static async fromWallet(
+    signer: OfflineAminoSigner | IAminoGenericOfflineSigner,
+  )
+```
+
+----------------------------------------
+
+TITLE: CosmJS Transaction Signing and Broadcasting (TypeScript)
+DESCRIPTION: Demonstrates signing and broadcasting a transaction using CosmJS's SigningStargateClient. It connects to an RPC endpoint with a wallet, constructs a message, defines fee and memo, and sends the transaction.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_6
+
+LANGUAGE: typescript
+CODE:
+```
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { SigningStargateClient } from "@cosmjs/stargate";
+import { makeCosmoshubPath } from "@cosmjs/crypto";
+
+(async () => {
+  const mnemonic = "your mnemonic here";
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    hdPaths: [makeCosmoshubPath(0)],
+  });
+  const [account] = await wallet.getAccounts();
+  const rpcEndpoint = 'http://your-rpc-endpoint:26657';
+  const client = await SigningStargateClient.connectWithSigner(rpcEndpoint, wallet);
+  
+  const msg = {
+    // Construct your message here
+  };
+  const fee = {
+    amount: [{ denom: 'uatom', amount: '5000' }],
+    gas: '200000',
+  };
+  const memo = "CosmJS transaction test";
+  
+  const result = await client.signAndBroadcast(account.address, [msg], fee, memo);
+  console.log("Transaction hash:", result.transactionHash);
+})();
+```
+
+----------------------------------------
+
+TITLE: InterchainJS Migration Imports for Wallet Generation (TypeScript)
+DESCRIPTION: Lists the necessary imports from InterchainJS modules (@interchainjs/crypto, @interchainjs/auth, @interchainjs/types) required for wallet generation when migrating from CosmJS.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_8
+
+LANGUAGE: typescript
+CODE:
+```
+import { Bip39, Random } from '@interchainjs/crypto';
+import { Secp256k1Auth } from '@interchainjs/auth/secp256k1';
+import { HDPath } from '@interchainjs/types';
+```
+
+----------------------------------------
+
+TITLE: Implementing Eip712DocAuth Class (TypeScript)
+DESCRIPTION: Implements the `Eip712DocAuth` class, extending `BaseDocAuth` to handle authentication and signing of EIP-712 documents for Ethereum. It includes a constructor, a static factory method `fromOfflineSigner`, and methods for getting public key (which throws an error as it's not needed for EIP-712) and signing documents using an offline signer.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_7
+
+LANGUAGE: typescript
+CODE:
+```
+import { BaseDocAuth, IKey, SignDocResponse } from "@interchainjs/types";
+import { IEthereumGenericOfflineSigner } from "./wallet";
+import { TransactionRequest } from "ethers";
+
+// Eip712DocAuth Class: Extends BaseDocAuth to provide authentication and document signing capabilities specific to EIP-712.
+export class Eip712DocAuth extends BaseDocAuth<
+  IEthereumGenericOfflineSigner,
+  TransactionRequest,
+  unknown,
+  string,
+  string,
+  string
+> {
+  // Calls the parent BaseDocAuth constructor with the provided offlineSigner and address.
+  constructor(
+    offlineSigner: IEthereumGenericOfflineSigner,
+    address: string
+  ) {
+    super(offlineSigner, address);
+  }
+
+  // Retrieves the accounts from the offlineSigner and creates a new instance of Eip712DocAuth with the first account's address.
+  static async fromOfflineSigner(
+    offlineSigner: IEthereumGenericOfflineSigner
+  ) {
+    const [account] = await offlineSigner.getAccounts();
+
+    return new Eip712DocAuth(offlineSigner, account);
+  }
+
+  // Throws an error because EIP-712 does not require a public key for signing operations.
+  getPublicKey(): IKey {
+    throw new Error("For EIP712, public key is not needed");
+  }
+
+  // Calls the sign method of the offlineSigner to sign the TransactionRequest document and returns a promise that resolves to the signature string.
+  signDoc(doc: TransactionRequest): Promise<string> {
+    return this.offlineSigner.sign(doc);
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Importing Signer Types (TypeScript)
+DESCRIPTION: This snippet shows the necessary TypeScript imports for the core UniSigner and BaseSigner types used within the interchainjs library for handling transaction signing.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#_snippet_0
+
+LANGUAGE: ts
+CODE:
+```
+import { UniSigner } from "@interchainjs/types";
+import { BaseSigner } from "@interchainjs/types";
+```
+
+----------------------------------------
+
+TITLE: Generating Wallet and Sending Transaction with InterchainJS Cosmos SDK
+DESCRIPTION: Demonstrates how to generate a wallet using Bip39 and Secp256k1Auth, derive an account using HDPath, prepare encoders, create a DirectSigner instance, retrieve the wallet address, build a MsgSend transaction, and sign/broadcast it using the InterchainJS Cosmos SDK, without relying on CosmJS. Requires dependencies like @interchainjs/auth, @interchainjs/types, @interchainjs/cosmos, @interchainjs/crypto, and interchainjs/cosmos/bank.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+// Import wallet and HD path utilities from the SDK packages
+import { Secp256k1Auth } from '@interchainjs/auth/secp256k1';
+import { HDPath } from '@interchainjs/types';
+// Import the DirectSigner from our SDK
+import { DirectSigner } from '@interchainjs/cosmos/signers/direct';
+import { Bip39, Random } from '@interchainjs/crypto';
+import { toEncoders } from '@interchainjs/cosmos/utils';
+import { MsgSend } from 'interchainjs/cosmos/bank/v1beta1/tx';
+
+(async () => {
+  // Generate a mnemonic using the SDK utility
+  const mnemonic = Bip39.encode(Random.getBytes(16)).toString();
+
+  // Derive authentication objects (wallet accounts) using the SDK's Secp256k1Auth
+  // Here we derive the first account using the standard Cosmos HD path.
+  const [auth] = Secp256k1Auth.fromMnemonic(mnemonic, [
+    HDPath.cosmos(0, 0, 0).toString(),
+  ]);
+
+  // Prepare any encoders required for your message types
+  const encoders:Encoder[] = toEncoders(MsgSend);
+
+  // Define your RPC endpoint (ensure it points to a working Cosmos RPC node)
+  const rpcEndpoint = 'http://your-rpc-endpoint:26657';
+
+  // Create a DirectSigner instance using the auth object and your RPC endpoint.
+  // The options object can include chain-specific settings (like the bech32 prefix).
+  const signer = new DirectSigner(auth, encoders, rpcEndpoint, {
+    prefix: 'cosmos', // Replace with your chain's prefix if different
+  });
+
+  // Retrieve the wallet address from the signer
+  const address = await signer.getAddress();
+  console.log('Wallet address:', address);
+
+  // ----- Transaction Example -----
+  // Build your transaction message (e.g., a bank MsgSend). Refer to @interchainjs/cosmos-types for details.
+  const msg = {
+    // Example message object; adjust fields according to your chain and message type
+    // For instance, if using bank.MsgSend, you would populate:
+    typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+    value: { fromAddress: address, toAddress: address, amount: [{ denom: 'uatom', amount: '1' }] }
+  };
+
+  // Sign and broadcast the transaction.
+  // The signAndBroadcast method handles building the transaction and sending it over RPC.
+  const result = await signer.signAndBroadcast([msg]);
+  console.log('Transaction hash:', result.hash);
+})();
+```
+
+----------------------------------------
+
+TITLE: Importing Injective AminoSigner (JS)
+DESCRIPTION: This snippet shows the standard way to import the `AminoSigner` class specifically designed for the Injective blockchain from the `@interchainjs/injective/amino` package. This class is essential for implementing transaction signing using the Amino standard.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/signer.md#_snippet_4
+
+LANGUAGE: javascript
+CODE:
+```
+import { AminoSigner } from "@interchainjs/injective/amino"
+```
+
+----------------------------------------
+
+TITLE: Using InterchainJS AminoSigner (TypeScript)
+DESCRIPTION: Demonstrates how to use the AminoSigner in InterchainJS for legacy signing compatibility. It initializes the signer with authentication details, encoders, converters, and an RPC endpoint, then signs and broadcasts a message with a specified fee.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_3
+
+LANGUAGE: typescript
+CODE:
+```
+import { AminoSigner } from '@interchainjs/cosmos/signers/amino';
+import { toEncoders, toConverters } from '@interchainjs/cosmos/utils';
+import { MsgSend } from 'interchainjs/cosmos/bank/v1beta1/tx';
+
+(async () => {
+  const [auth] = Secp256k1Auth.fromMnemonic(mnemonic, [
+    HDPath.cosmos(0, 0, 0).toString(),
+  ]);
+  const rpcEndpoint = 'http://your-rpc-endpoint:26657';
+
+  // Create an AminoSigner instance
+  const aminoSigner = new AminoSigner(
+    auth,
+    toEncoders(MsgSend),
+    toConverters(MsgSend),
+    rpcEndpoint,
+    { prefix: 'cosmos' }
+  );
+
+  // Build your message and set fee/memo if needed
+  const msg = {
+    // Your message fields here
+  };
+
+  const fee = {
+    amount: [
+      {
+        denom: 'uatom',
+        amount: '5000',
+      },
+    ],
+    gas: '200000',
+  };
+
+  const result = await aminoSigner.signAndBroadcast({
+    messages: [msg], fee
+  });
+  console.log('Transaction hash:', result.hash);
+})();
+```
+
+----------------------------------------
+
+TITLE: CosmJS Wallet Generation (TypeScript)
+DESCRIPTION: Shows the process of generating a wallet from a mnemonic and retrieving the account address using CosmJS's DirectSecp256k1HdWallet and makeCosmoshubPath.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/migration-from-cosmjs.md#_snippet_4
+
+LANGUAGE: typescript
+CODE:
+```
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { makeCosmoshubPath } from "@cosmjs/crypto";
+
+(async () => {
+  const mnemonic = "your mnemonic here";
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    hdPaths: [makeCosmoshubPath(0)],
+  });
+  const [account] = await wallet.getAccounts();
+  console.log("Wallet address:", account.address);
+})();
+```
+
+----------------------------------------
+
+TITLE: AminoSigner Class Methods - TypeScript
+DESCRIPTION: Defines the constructor for the AminoSigner class and a static method `fromWalletToSigners`. The constructor initializes an instance, while `fromWalletToSigners` creates AminoSigners from an existing wallet signer, typically returning signers for all accounts in the wallet. Both methods require encoders, converters, and optionally an endpoint and options.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_5
+
+LANGUAGE: TypeScript
+CODE:
+```
+encoders: Encoder[],
+       converters: AminoConverter[],
+       endpoint?: string | HttpEndpoint,
+       options?: SignerOptions
+     ) {
+       // Implementation details...
+     }
+
+     // Create AminoSigners from a wallet (returns all accounts)
+     static async fromWalletToSigners(
+       signer: OfflineAminoSigner | IAminoGenericOfflineSigner,
+       encoders: Encoder[],
+       converters: AminoConverter[],
+       endpoint?: string | HttpEndpoint,
+       options?: SignerOptions
+     ) {
+       // Implementation details...
+     }
+   }
+```
+
+----------------------------------------
+
+TITLE: Implementing DocAuth with Generic Offline Signer - TypeScript
+DESCRIPTION: Defines an interface and a class to wrap an existing OfflineAminoSigner into a standard generic interface (IAminoGenericOfflineSigner) compatible with the DocAuth approach, facilitating the signing of structured documents like AminoSignDoc.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_2
+
+LANGUAGE: TypeScript
+CODE:
+```
+export interface IAminoGenericOfflineSigner
+  extends IGenericOfflineSigner<
+    string,
+    CosmosAminoDoc,
+    AminoSignResponse,
+    IAminoGenericOfflineSignArgs,
+    AccountData
+  > {}
+```
+
+LANGUAGE: TypeScript
+CODE:
+```
+export class AminoGenericOfflineSigner
+  implements IAminoGenericOfflineSigner
+{
+  constructor(public offlineSigner: OfflineAminoSigner) {}
+
+  readonly signMode: string = SIGN_MODE.AMINO;
+
+  getAccounts(): Promise<readonly AccountData[]> {
+    return this.offlineSigner.getAccounts();
+  }
+
+  sign({ signerAddress, signDoc }: IAminoGenericOfflineSignArgs) {
+    return this.offlineSigner.signAmino(signerAddress, signDoc);
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Defining Cosmos Amino Signer Types and Interface - TypeScript
+DESCRIPTION: Defines the specific types used in the Cosmos Amino signing process, such as arguments, transaction type, sign document, address response, and broadcast response. It then defines the CosmosAminoSigner interface by extending the generic UniSigner with these specific types.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_0
+
+LANGUAGE: TypeScript
+CODE:
+```
+SignArgs = CosmosSignArgs = {
+  messages: Message[];
+  fee?: StdFee;
+  memo?: string;
+  options?: Option;
+};
+
+Tx = TxRaw; // cosmos.tx.v1beta1.TxRaw
+
+Doc = StdSignDoc;
+
+AddressResponse = string;
+
+BroadcastResponse = { hash: string };
+```
+
+LANGUAGE: TypeScript
+CODE:
+```
+export type CosmosAminoSigner = UniSigner<
+  CosmosSignArgs,
+  TxRaw,
+  StdSignDoc,
+  string,
+  BroadcastResponse
+>;
+```
+
+----------------------------------------
+
+TITLE: Implementing the Amino Transaction Builder - TypeScript
+DESCRIPTION: Shows the structure of the AminoTxBuilder class, which extends BaseCosmosTxBuilder. It demonstrates setting the sign mode and outlines the methods required to build, serialize, and sync information from signed documents for the Amino signing process.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/docs/tutorial.md#_snippet_3
+
+LANGUAGE: TypeScript
+CODE:
+```
+export class AminoTxBuilder extends BaseCosmosTxBuilder<CosmosAminoDoc> {
+  constructor(
+    protected ctx: BaseCosmosTxBuilderContext<
+      AminoSignerBase<CosmosAminoDoc>
+    >
+  ) {
+    // Set the sign mode
+    super(SignMode.SIGN_MODE_LEGACY_AMINO_JSON, ctx);
+  }
+}
+```
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Build the signing document
+async buildDoc({
+  messages,
+  fee,
+  memo,
+  options,
+}: CosmosSignArgs): Promise<CosmosAminoDoc> {
+  // Implementation details...
+}
+```
+
+LANGUAGE: TypeScript
+CODE:
+```
+// Serialize the signing document
+async buildDocBytes(doc: CosmosAminoDoc): Promise<Uint8Array> {
+  // Implementation details...
+}
+```
+
+LANGUAGE: TypeScript
+CODE:
+```
+async syncSignedDoc(
+  txRaw: TxRaw,
+  signResp: SignDocResponse<CosmosAminoDoc>
+): Promise<TxRaw> {
+  // Implementation details...
+}
+```
+
+----------------------------------------
+
+TITLE: Extracting Proposal ID from Transaction Events
+DESCRIPTION: Shows how to parse transaction events after submitting a proposal to extract the `proposal_id`. Uses `fromBase64` and `toUtf8` utilities.
+SOURCE: common
+
+LANGUAGE: typescript
+CODE:
+import { fromBase64, toUtf8 } from '@interchainjs/utils';
+import { DeliverTxResponse } from '@interchainjs/cosmos/types/broadcast'; // Assuming result is DeliverTxResponse
+
+declare const result: DeliverTxResponse; // Result from submitProposal
+let proposalId: string;
+
+const proposalIdEvent = result.events.find(
+(event: any) => event.type === 'submit_proposal' // Type assertion might be needed
+);
+const proposalIdAttribute = proposalIdEvent!.attributes.find(
+(attr: any) => toUtf8(fromBase64(attr.key)) === 'proposal_id' // Type assertion might be needed
+);
+proposalId = toUtf8(fromBase64(proposalIdAttribute!.value));
+
+console.log(proposalId);

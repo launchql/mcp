@@ -1,0 +1,1631 @@
+TITLE: Broadcasting Messages with Signing Client (JS)
+DESCRIPTION: Shows how to construct a message object with typeUrl and value, define a transaction fee, and use the signing client's signAndBroadcast method to send the transaction.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_27
+
+LANGUAGE: js
+CODE:
+```
+const msg = {
+  typeUrl: MsgSend.typeUrl,
+  value: MsgSend.fromPartial({
+    amount: [
+      {
+        denom: "inj",
+        amount: "1000",
+      },
+    ],
+    toAddress: address,
+    fromAddress: address,
+  }),
+};
+
+const fee: StdFee = {
+  amount: [
+    {
+      denom: "inj",
+      amount: "864",
+    },
+  ],
+  gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+```
+
+----------------------------------------
+
+TITLE: Initializing Signing Client with Signer (JS)
+DESCRIPTION: Demonstrates how to connect to a signing client using SigningClient.connectWithSigner, providing an RPC endpoint, a signer, and signer options specific to Cosmos/Injective.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_26
+
+LANGUAGE: js
+CODE:
+```
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+import { defaultSignerOptions } from "@interchainjs/injective/defaults";
+
+const signingClient = await SigningClient.connectWithSigner(
+  await getRpcEndpoint(),
+  new AminoGenericOfflineSigner(aminoOfflineSigner),
+  {
+    signerOptions: defaultSignerOptions.Cosmos,
+  }
+);
+```
+
+----------------------------------------
+
+TITLE: Manually Constructing SigningClient (injectivejs/interchainjs, JS)
+DESCRIPTION: Demonstrates how to manually create a `SigningClient` by combining various proto registries and amino converters from `injectivejs` and `@interchainjs/cosmos` before connecting with a signer. Useful for advanced configurations.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_27
+
+LANGUAGE: js
+CODE:
+```
+import {
+    cosmosAminoConverters,
+    cosmosProtoRegistry,
+    cosmwasmAminoConverters,
+    cosmwasmProtoRegistry,
+    ibcProtoRegistry,
+    ibcAminoConverters,
+    injectiveAminoConverters,
+    injectiveProtoRegistry
+} from 'injectivejs';
+
+const signer: OfflineSigner = /* create your signer (see above)  */
+const rpcEndpoint = 'https://rpc.cosmos.directory/injective'; // or another URL
+
+const protoRegistry: ReadonlyArray<[string, GeneratedType]> = [
+    ...cosmosProtoRegistry,
+    ...cosmwasmProtoRegistry,
+    ...ibcProtoRegistry,
+    ...injectiveProtoRegistry
+];
+
+const aminoConverters = {
+    ...cosmosAminoConverters,
+    ...cosmwasmAminoConverters,
+    ...ibcAminoConverters,
+    ...injectiveAminoConverters
+};
+
+const registry = new Registry(protoRegistry);
+const aminoTypes = new AminoTypes(aminoConverters);
+
+const signingClient = await SigningClient.connectWithSigner(rpcEndpoint, signer);
+
+signingClient.addEncoders(registry);
+signingClient.addConverters(aminoTypes);
+```
+
+----------------------------------------
+
+TITLE: Initializing SigningClient with Signer (interchainjs, JS)
+DESCRIPTION: Connects to an RPC endpoint and initializes a `SigningClient` using a provided offline signer and default Injective signer options. Requires `@interchainjs/cosmos/signing-client` and `@interchainjs/injective/defaults` dependencies.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_25
+
+LANGUAGE: js
+CODE:
+```
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+import { defaultSignerOptions } from "@interchainjs/injective/defaults";
+
+const signingClient = await SigningClient.connectWithSigner(
+  await getRpcEndpoint(),
+  new AminoGenericOfflineSigner(aminoOfflineSigner),
+  {
+    signerOptions: defaultSignerOptions.Cosmos,
+  }
+);
+```
+
+----------------------------------------
+
+TITLE: Manually Constructing SigningClient (JS)
+DESCRIPTION: Provides an example of manually creating a SigningClient by aggregating protocol buffer registries and Amino converters from various modules (cosmos, cosmwasm, ibc, injective) and adding them to the client after establishing the connection.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_14
+
+LANGUAGE: js
+CODE:
+```
+import {
+    cosmosAminoConverters,
+    cosmosProtoRegistry,
+    cosmwasmAminoConverters,
+    cosmwasmProtoRegistry,
+    ibcProtoRegistry,
+    ibcAminoConverters,
+    injectiveAminoConverters,
+    injectiveProtoRegistry
+} from 'injective-vue';
+
+const signer: OfflineSigner = /* create your signer (see above)  */
+const rpcEndpoint = 'https://rpc.cosmos.directory/injective'; // or another URL
+
+const protoRegistry: ReadonlyArray<[string, GeneratedType]> = [
+    ...cosmosProtoRegistry,
+    ...cosmwasmProtoRegistry,
+    ...ibcProtoRegistry,
+    ...injectiveProtoRegistry
+];
+
+const aminoConverters = {
+    ...cosmosAminoConverters,
+    ...cosmwasmAminoConverters,
+    ...ibcAminoConverters,
+    ...injectiveAminoConverters
+};
+
+const registry = new Registry(protoRegistry);
+const aminoTypes = new AminoTypes(aminoConverters);
+
+const signingClient = await SigningClient.connectWithSigner(rpcEndpoint, signer);
+
+signingClient.addEncoders(registry);
+signingClient.addConverters(aminoTypes);
+```
+
+----------------------------------------
+
+TITLE: Constructing InjectiveJS Signing Client (JS)
+DESCRIPTION: Demonstrates how to manually construct a SigningClient instance from the injectivejs library. It involves importing necessary registries and converters, combining them, creating a Registry and AminoTypes instance, and connecting with a signer and RPC endpoint before adding the encoders and converters to the client.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_28
+
+LANGUAGE: js
+CODE:
+```
+import {
+    cosmosAminoConverters,
+    cosmosProtoRegistry,
+    cosmwasmAminoConverters,
+    cosmwasmProtoRegistry,
+    ibcProtoRegistry,
+    ibcAminoConverters,
+    injectiveAminoConverters,
+    injectiveProtoRegistry
+} from 'injectivejs';
+
+const signer: OfflineSigner = /* create your signer (see above)  */
+const rpcEndpoint = 'https://rpc.cosmos.directory/injective'; // or another URL
+
+const protoRegistry: ReadonlyArray<[string, GeneratedType]> = [
+    ...cosmosProtoRegistry,
+    ...cosmwasmProtoRegistry,
+    ...ibcProtoRegistry,
+    ...injectiveProtoRegistry
+];
+
+const aminoConverters = {
+    ...cosmosAminoConverters,
+    ...cosmwasmAminoConverters,
+    ...ibcAminoConverters,
+    ...injectiveAminoConverters
+};
+
+const registry = new Registry(protoRegistry);
+const aminoTypes = new AminoTypes(aminoConverters);
+
+const signingClient = await SigningClient.connectWithSigner(rpcEndpoint, signer);
+
+signingClient.addEncoders(registry);
+signingClient.addConverters(aminoTypes);
+```
+
+----------------------------------------
+
+TITLE: Initializing SigningClient with Default Options (JS)
+DESCRIPTION: Demonstrates how to initialize a SigningClient from '@interchainjs/cosmos' using the 'connectWithSigner' method, providing an RPC endpoint, an offline signer, and default signer options specifically configured for Injective.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_12
+
+LANGUAGE: js
+CODE:
+```
+import { SigningClient } from "@interchainjs/cosmos/signing-client";
+import { defaultSignerOptions } from "@interchainjs/injective/defaults";
+
+const signingClient = await SigningClient.connectWithSigner(
+  await getRpcEndpoint(),
+  new AminoGenericOfflineSigner(aminoOfflineSigner),
+  {
+    signerOptions: defaultSignerOptions.Cosmos,
+  }
+);
+```
+
+----------------------------------------
+
+TITLE: Broadcasting Cosmos Messages (JS)
+DESCRIPTION: Shows how to construct a Cosmos MsgSend message and a standard fee object, then use the 'signingClient.signAndBroadcast' method to sign the transaction with the connected wallet and broadcast it to the Injective blockchain.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_13
+
+LANGUAGE: js
+CODE:
+```
+const msg = {
+  typeUrl: MsgSend.typeUrl,
+  value: MsgSend.fromPartial({
+    amount: [
+      {
+        denom: "inj",
+        amount: "1000",
+      },
+    ],
+    toAddress: address,
+    fromAddress: address,
+  }),
+};
+
+const fee: StdFee = {
+  amount: [
+    {
+      denom: "inj",
+      amount: "864",
+    },
+  ],
+  gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos Message Composers (JS)
+DESCRIPTION: Imports message composer functions for various Cosmos modules (distribution, bank, staking, governance) from the 'injective-vue' library, providing convenient methods to create messages for these modules.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_11
+
+LANGUAGE: js
+CODE:
+```
+import { cosmos } from "injective-vue";
+
+const {
+  fundCommunityPool,
+  setWithdrawAddress,
+  withdrawDelegatorReward,
+  withdrawValidatorCommission,
+} = cosmos.distribution.v1beta1.MessageComposer.fromPartial;
+
+const { multiSend, send } = cosmos.bank.v1beta1.MessageComposer.fromPartial;
+
+const {
+  beginRedelegate,
+  createValidator,
+  delegate,
+  editValidator,
+  undelegate,
+} = cosmos.staking.v1beta1.MessageComposer.fromPartial;
+
+const { deposit, submitProposal, vote, voteWeighted } =
+  cosmos.gov.v1beta1.MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Using DirectSigner for Signing and Broadcasting Transactions (TypeScript)
+DESCRIPTION: Demonstrates how to initialize and use the DirectSigner from @interchainjs/injective to sign and broadcast transactions. Requires constructing AUTH and ENCODERs separately and currently only supports RPC endpoints.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/networks/injective/README.md#_snippet_1
+
+LANGUAGE: ts
+CODE:
+```
+import { DirectSigner } from "@interchainjs/injective/signers/direct";
+
+const signer = new DirectSigner(<AUTH>, <ENCODER>[], <RPC_ENDPOINT>); // **ONLY** rpc endpoint is supported for now
+const result = await signer.signAndBroadcast(<MESSAGE>[]);
+console.log(result.hash); // the hash of TxRaw
+```
+
+----------------------------------------
+
+TITLE: Importing IBC Transfer Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for IBC transfer messages and destructures the transfer message type.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_21
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/ibc/applications/transfer/v1/tx.registry";
+
+const { transfer } = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Composing IBC Transfer Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the IBC Transfer module and destructures the `transfer` message creation function using `withTypeUrl`. This is used for building IBC transfer transaction messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_20
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/ibc/applications/transfer/v1/tx.registry";
+
+const { transfer } = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Broadcasting Cosmos Message (interchainjs, JS)
+DESCRIPTION: Constructs a `MsgSend` message and a standard fee object, then uses the `signingClient` to sign and broadcast the transaction to the blockchain. Requires a configured `signingClient` and valid message/fee structures.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_26
+
+LANGUAGE: js
+CODE:
+```
+const msg = {
+  typeUrl: MsgSend.typeUrl,
+  value: MsgSend.fromPartial({
+    amount: [
+      {
+        denom: "inj",
+        amount: "1000",
+      },
+    ],
+    toAddress: address,
+    fromAddress: address,
+  }),
+};
+
+const fee: StdFee = {
+  amount: [
+    {
+      denom: "inj",
+      amount: "864",
+    },
+  ],
+  gas: "86364",
+};
+const response = await signingClient.signAndBroadcast(address, [msg], fee);
+```
+
+----------------------------------------
+
+TITLE: Importing Exchange Message Composer Functions (JavaScript)
+DESCRIPTION: Imports the `MessageComposer` for the Injective Exchange module from `injectivejs` and extracts a comprehensive set of message creation functions using `withTypeUrl` for composing various exchange transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_15
+
+LANGUAGE: javascript
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/exchange/v1beta1/tx.registry";
+
+const {
+  adminUpdateBinaryOptionsMarket,
+  batchCancelBinaryOptionsOrders,
+  batchCancelDerivativeOrders,
+  batchCancelSpotOrders,
+  batchCreateDerivativeLimitOrders,
+  batchCreateSpotLimitOrders,
+  batchUpdateOrders,
+  cancelBinaryOptionsOrder,
+  cancelDerivativeOrder,
+  cancelSpotOrder,
+  createBinaryOptionsLimitOrder,
+  createBinaryOptionsMarketOrder,
+  createDerivativeLimitOrder,
+  createDerivativeMarketOrder,
+  createSpotLimitOrder,
+  createSpotMarketOrder,
+  deposit,
+  exec,
+  externalTransfer,
+  increasePositionMargin,
+  instantBinaryOptionsMarketLaunch,
+  instantExpiryFuturesMarketLaunch,
+  instantPerpetualMarketLaunch,
+  instantSpotMarketLaunch,
+  liquidatePosition,
+  rewardsOptOut,
+  subaccountTransfer,
+  withdraw,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing IBC Transfer Message Composer (JS)
+DESCRIPTION: Shows how to import the `transfer` message composer function for initiating IBC token transfers using `ibc.applications.transfer.v1.MessageComposer.withTypeUrl` from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_10
+
+LANGUAGE: js
+CODE:
+```
+import { ibc } from "injective-vue";
+
+const { transfer } = ibc.applications.transfer.v1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Exchange Message Composer Functions (JavaScript)
+DESCRIPTION: Imports the `MessageComposer` for the Injective Exchange module from `injectivejs` and extracts specific message creation functions using `withTypeUrl` for composing transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_13
+
+LANGUAGE: javascript
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/exchange/v1beta1/tx.registry";
+
+const { createSpotLimitOrder, createSpotMarketOrder, deposit } =
+  MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Composing Exchange Messages Example (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective Exchange module and destructures specific message creation functions (`createSpotLimitOrder`, `createSpotMarketOrder`, `deposit`) using `withTypeUrl`. This is used for building transaction messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_12
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/exchange/v1beta1/tx.registry";
+
+const { createSpotLimitOrder, createSpotMarketOrder, deposit } =
+  MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Using React Hooks for Staking Queries and Transactions
+DESCRIPTION: Illustrates the usage of `useGetValidators` for fetching validator data and `useDelegate` for performing a delegation transaction, leveraging `react-query` hooks.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_2
+
+LANGUAGE: js
+CODE:
+```
+import { useDelegate } from "injective-react/cosmos/staking/v1beta1/tx.rpc.react";
+import { useGetValidators } from "injective-react/cosmos/staking/v1beta1/query.rpc.react";
+
+const {
+  data,
+  isSuccess: isGetValidatorsDone,
+  isLoading: isGetValidatorsLoading,
+} = useGetValidators({
+  request: {
+    status: "BOND_STATUS_BONDED",
+  },
+  options: {
+    context: defaultContext,
+    enabled: !validatorAddress,
+  },
+  rpcClient,
+});
+
+const { mutate: delegate, isSuccess: isDelegateSuccess } = useDelegate({
+  clientResolver: signingClient,
+  options: {
+    context: defaultContext,
+    onSuccess: (data: any) => {
+      console.log("onSuccess", data);
+    },
+    onError: (error) => {
+      console.log("onError", error);
+    },
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Creating and Using Injective RPC Query Client (JS)
+DESCRIPTION: Demonstrates how to initialize an RPC query client using `injective-vue` and perform queries against both Cosmos SDK modules (like bank) and Injective-specific modules (like exchange). Requires an RPC endpoint.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+import { injective } from "injective-vue";
+
+const { createRPCQueryClient } = injective.ClientFactory;
+const client = await createRPCQueryClient({ rpcEndpoint: RPC_ENDPOINT });
+
+// now you can query the cosmos modules
+const balance = await client.cosmos.bank.v1beta1.allBalances({
+  address: "inj1addresshere",
+});
+
+// you can also query the injective modules
+const balances = await client.injective.exchange.v1beta1.exchangeBalances();
+```
+
+----------------------------------------
+
+TITLE: Querying Chain Data using InjectiveJS RPC Clients
+DESCRIPTION: This snippet shows how to import and use RPC client functions from InjectiveJS to query data from the Injective chain. It demonstrates fetching all balances for an address and exchange balances by first obtaining the RPC endpoint.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_1
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { getAllBalances } from "injectivejs/cosmos/bank/v1beta1/query.rpc.func";
+import { getExchangeBalances } from "injectivejs/injective/exchange/v1beta1/query.rpc.func";
+
+{ getRpcEndpoint } = useChain("injective");
+
+const endpoint = await getRpcEndpoint();
+
+// now you can query the cosmos modules
+const balance = await getAllBalances(endpoint, {
+  address: "inj1addresshere",
+});
+
+const exchangeBalance = await getExchangeBalances(endpoint, {});
+```
+
+----------------------------------------
+
+TITLE: Importing General Transaction Helper Functions
+DESCRIPTION: This snippet shows example imports for general transaction helper functions available in the InjectiveJS library, specifically from the exchange module. These functions are used to construct, sign, and broadcast transaction messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_2
+
+LANGUAGE: JavaScript
+CODE:
+```
+import {
+  createDeposit,
+  createLiquidatePosition,
+  createActivateStakeGrant,
+} from "injectivejs/injective/exchange/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Composing Exchange Messages Full List (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective Exchange module and destructures a comprehensive list of message creation functions using `withTypeUrl`. These functions cover various exchange operations like order creation, cancellation, batch operations, transfers, etc.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_14
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/exchange/v1beta1/tx.registry";
+
+const {
+  adminUpdateBinaryOptionsMarket,
+  batchCancelBinaryOptionsOrders,
+  batchCancelDerivativeOrders,
+  batchCancelSpotOrders,
+  batchCreateDerivativeLimitOrders,
+  batchCreateSpotLimitOrders,
+  batchUpdateOrders,
+  cancelBinaryOptionsOrder,
+  cancelDerivativeOrder,
+  cancelSpotOrder,
+  createBinaryOptionsLimitOrder,
+  createBinaryOptionsMarketOrder,
+  createDerivativeLimitOrder,
+  createDerivativeMarketOrder,
+  createSpotLimitOrder,
+  createSpotMarketOrder,
+  deposit,
+  exec,
+  externalTransfer,
+  increasePositionMargin,
+  instantBinaryOptionsMarketLaunch,
+  instantExpiryFuturesMarketLaunch,
+  instantPerpetualMarketLaunch,
+  instantSpotMarketLaunch,
+  liquidatePosition,
+  rewardsOptOut,
+  subaccountTransfer,
+  withdraw,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing CosmWasm Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for CosmWasm messages and destructures common message types for easy access.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_20
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmwasm/wasm/v1/tx.registry";
+
+const {
+  clearAdmin,
+  executeContract,
+  instantiateContract,
+  migrateContract,
+  storeCode,
+  updateAdmin,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Exchange Message Composers (JS)
+DESCRIPTION: Shows how to import specific message composer functions for the Injective exchange module using `injective.exchange.v1beta1.MessageComposer.withTypeUrl` from the `injective-vue` library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_2
+
+LANGUAGE: js
+CODE:
+```
+import { injective } from "injective-vue";
+
+const { createSpotLimitOrder, createSpotMarketOrder, deposit } =
+  injective.exchange.v1beta1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Composing CosmWasm Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the CosmWasm module and destructures message creation functions using `withTypeUrl`. These are used for building transaction messages for interacting with CosmWasm contracts.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_19
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmwasm/wasm/v1/tx.registry";
+
+const {
+  clearAdmin,
+  executeContract,
+  instantiateContract,
+  migrateContract,
+  storeCode,
+  updateAdmin,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing CosmWasm RPC Functions (injectivejs) - JS
+DESCRIPTION: Imports specific RPC functions for interacting with CosmWasm contracts on Injective using the `injectivejs` library. These functions cover operations like storing, instantiating, executing, and migrating contracts.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_9
+
+LANGUAGE: js
+CODE:
+```
+import {
+  executeContract,
+  clearAdmin,
+  instantiateContract,
+  instantiateContract2,
+  migrateContract,
+  pinCodes,
+  removeCodeUploadParamsAddresses,
+  storeAndInstantiateContract,
+  storeCode,
+  sudoContract,
+  unpinCodes,
+  updateAdmin,
+  updateContractLabel,
+  updateInstantiateConfig,
+  addCodeUploadParamsAddresses,
+  storeAndMigrateContract,
+} from "injectivejs/cosmwasm/wasm/v1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Accessing Cosmos Distribution Messages (injectivejs, JS)
+DESCRIPTION: Imports and destructures message composer functions for Cosmos distribution module messages (e.g., fundCommunityPool, withdrawDelegatorReward) from `injectivejs`. Requires `injectivejs` dependency.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_21
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/distribution/v1beta1/tx.registry";
+
+const {
+  fundCommunityPool,
+  setWithdrawAddress,
+  withdrawDelegatorReward,
+  withdrawValidatorCommission,
+} = MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Accessing Cosmos Governance Messages (injectivejs, JS)
+DESCRIPTION: Imports and destructures message composer functions for Cosmos governance module messages (e.g., submitProposal, vote) from `injectivejs`. Requires `injectivejs` dependency.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_24
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/gov/v1beta1/tx.registry";
+
+const { deposit, submitProposal, vote, voteWeighted } =
+  cosmos.gov.v1beta1.MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos SDK RPC Functions (JavaScript)
+DESCRIPTION: Imports various RPC functions from the `injectivejs` library for interacting with core Cosmos SDK modules like distribution, bank, staking, and governance.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_12
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  fundCommunityPool,
+  communityPoolSpend,
+  depositValidatorRewardsPool,
+} from "injectivejs/cosmos/distribution/v1beta1/tx.rpc.func";
+
+import {
+  send,
+  multiSend,
+} from "injectivejs/cosmos/bank/v1beta1/tx.rpc.func";
+
+import {
+  delegate,
+  undelegate,
+  cancelUnbondingDelegation,
+  createValidator,
+} from "injectivejs/cosmos/staking/v1beta1/tx.rpc.func";
+
+import {
+  deposit,
+  submitProposal,
+  vote,
+  voteWeighted,
+} from "injectivejs/cosmos/gov/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing IBC Transfer RPC Function (JavaScript)
+DESCRIPTION: Imports the RPC function from the `injectivejs` library specifically for initiating IBC transfers between chains.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_11
+
+LANGUAGE: javascript
+CODE:
+```
+import { transfer } from "injectivejs/ibc/applications/transfer/v1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos Gov Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for Cosmos governance messages and destructures common message types.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_25
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/gov/v1beta1/tx.registry";
+
+const { deposit, submitProposal, vote, voteWeighted } =
+  cosmos.gov.v1beta1.MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing IBC Transfer RPC Function (injectivejs) - JS
+DESCRIPTION: Imports the `transfer` RPC function specifically for initiating IBC token transfers using the `injectivejs` library.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_10
+
+LANGUAGE: js
+CODE:
+```
+import { transfer } from "injectivejs/ibc/applications/transfer/v1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Composing Auction Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective Auction module and destructures the `bid` message creation function using `withTypeUrl`. This is used for building auction-related transaction messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_13
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/auction/v1beta1/tx.registry";
+
+const { bid } = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Auction Transaction Helper Functions
+DESCRIPTION: This snippet shows the import for the transaction helper function related to the Injective Auction module, specifically the `bid` function. These functions facilitate creating and broadcasting auction-related transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_3
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { bid } from "injectivejs/injective/auction/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Accessing Cosmos Bank Messages (injectivejs, JS)
+DESCRIPTION: Imports and destructures message composer functions for Cosmos bank module messages (e.g., multiSend, send) from `injectivejs`. Requires `injectivejs` dependency.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_22
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/bank/v1beta1/tx.registry";
+
+const { multiSend, send } = MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing Peggy RPC Functions (JavaScript)
+DESCRIPTION: Imports RPC functions from the `injectivejs` library for interacting with the Injective Peggy module, which handles bridging assets between Injective and Ethereum.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_9
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  blacklistEthereumAddresses,
+  cancelSendToEth,
+  confirmBatch,
+  depositClaim,
+  eRC20DeployedClaim,
+  requestBatch,
+  revokeEthereumBlacklist,
+  sendToEth,
+  setOrchestratorAddresses,
+  submitBadSignatureEvidence,
+  valsetConfirm,
+  valsetUpdateClaim,
+  withdrawClaim,
+} from "injectivejs/injective/peggy/v1/msgs.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Peggy Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for Injective Peggy messages and destructures common message types for easy access.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_19
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/peggy/v1/tx.registry";
+
+const {
+  cancelSendToEth,
+  confirmBatch,
+  depositClaim,
+  eRC20DeployedClaim,
+  requestBatch,
+  sendToEth,
+  setOrchestratorAddresses,
+  submitBadSignatureEvidence,
+  valsetConfirm,
+  valsetUpdateClaim,
+  withdrawClaim,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Exchange Transaction Helper Functions
+DESCRIPTION: This snippet lists the available transaction helper functions for the Injective Exchange module. These functions cover a wide range of operations including order creation, cancellation, market management, and fund transfers.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_4
+
+LANGUAGE: JavaScript
+CODE:
+```
+import {
+  activateStakeGrant,
+  adminUpdateBinaryOptionsMarket,
+  authorizeStakeGrants,
+  batchCancelBinaryOptionsOrders,
+  batchCancelDerivativeOrders,
+  batchCancelSpotOrders,
+  batchCreateDerivativeLimitOrders,
+  batchCreateSpotLimitOrders,
+  batchUpdateOrders,
+  cancelBinaryOptionsOrder,
+  cancelDerivativeOrder,
+  cancelSpotOrder,
+  createBinaryOptionsLimitOrder,
+  createBinaryOptionsMarketOrder,
+  createDerivativeLimitOrder,
+  createDerivativeMarketOrder,
+  createSpotLimitOrder,
+  createSpotMarketOrder,
+  decreasePositionMargin,
+  deposit,
+  emergencySettleMarket,
+  externalTransfer,
+  increasePositionMargin,
+  instantBinaryOptionsMarketLaunch,
+  instantExpiryFuturesMarketLaunch,
+  instantPerpetualMarketLaunch,
+  instantSpotMarketLaunch,
+  liquidatePosition,
+  privilegedExecuteContract,
+  rewardsOptOut,
+  subaccountTransfer,
+  updateDerivativeMarket,
+  updateParams,
+  updateSpotMarket,
+  withdraw,
+} from "injectivejs/injective/exchange/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos Bank Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for Cosmos bank messages and destructures multiSend and send message types.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_23
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/bank/v1beta1/tx.registry";
+
+const { multiSend, send } = MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing Peggy Message Composers (JS)
+DESCRIPTION: Provides a list of message composer functions available for the Injective Peggy module (Ethereum bridge), imported from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_8
+
+LANGUAGE: js
+CODE:
+```
+const {
+  cancelSendToEth,
+  confirmBatch,
+  depositClaim,
+  eRC20DeployedClaim,
+  requestBatch,
+  sendToEth,
+  setOrchestratorAddresses,
+  submitBadSignatureEvidence,
+  valsetConfirm,
+  valsetUpdateClaim,
+  withdrawClaim,
+} = injective.peggy.v1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Accessing Cosmos Staking Messages (injectivejs, JS)
+DESCRIPTION: Imports and destructures message composer functions for Cosmos staking module messages (e.g., delegate, undelegate) from `injectivejs`. Requires `injectivejs` dependency.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_23
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/staking/v1beta1/tx.registry";
+
+const {
+  beginRedelegate,
+  createValidator,
+  delegate,
+  editValidator,
+  undelegate,
+} = MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing Oracle RPC Functions (injectivejs) - JS
+DESCRIPTION: Imports specific RPC functions related to the Injective Oracle module from the `injectivejs` library. These functions are used for interacting with oracle-related operations on the chain.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_7
+
+LANGUAGE: js
+CODE:
+```
+import {
+  relayBandRates,
+  relayCoinbaseMessages,
+  relayPriceFeedPrice,
+  relayProviderPrices,
+  relayPythPrices,
+  relayStorkMessage,
+  requestBandIBCRates,
+} from "injectivejs/injective/oracle/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos SDK RPC Functions (injectivejs) - JS
+DESCRIPTION: Imports various RPC functions from different Cosmos SDK modules (Distribution, Bank, Staking, Gov) available through the `injectivejs` library. These functions are used for standard Cosmos chain interactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_11
+
+LANGUAGE: js
+CODE:
+```
+import {
+  fundCommunityPool,
+  communityPoolSpend,
+  depositValidatorRewardsPool,
+} from "injectivejs/cosmos/distribution/v1beta1/tx.rpc.func";
+
+import {
+  send,
+  multiSend,
+} from "injectivejs/cosmos/bank/v1beta1/tx.rpc.func";
+
+import {
+  delegate,
+  undelegate,
+  cancelUnbondingDelegation,
+  createValidator,
+} from "injectivejs/cosmos/staking/v1beta1/tx.rpc.func";
+
+import {
+  deposit,
+  submitProposal,
+  vote,
+  voteWeighted,
+} from "injectivejs/cosmos/gov/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Oracle RPC Functions (JavaScript)
+DESCRIPTION: Imports RPC functions from the `injectivejs` library for interacting with the Injective Oracle module, primarily for relaying price data from various sources.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_8
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  relayBandRates,
+  relayCoinbaseMessages,
+  relayPriceFeedPrice,
+  relayProviderPrices,
+  relayPythPrices,
+  relayStorkMessage,
+  requestBandIBCRates,
+} from "injectivejs/injective/oracle/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos Distribution Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for Cosmos distribution messages and destructures common message types.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_22
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/distribution/v1beta1/tx.registry";
+
+const {
+  fundCommunityPool,
+  setWithdrawAddress,
+  withdrawDelegatorReward,
+  withdrawValidatorCommission,
+} = MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing Peggy RPC Functions (injectivejs) - JS
+DESCRIPTION: Imports specific RPC functions related to the Injective Peggy module from the `injectivejs` library. These functions are used for interacting with the Ethereum bridge functionality.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_8
+
+LANGUAGE: js
+CODE:
+```
+import {
+  blacklistEthereumAddresses,
+  cancelSendToEth,
+  confirmBatch,
+  depositClaim,
+  eRC20DeployedClaim,
+  requestBatch,
+  revokeEthereumBlacklist,
+  sendToEth,
+  setOrchestratorAddresses,
+  submitBadSignatureEvidence,
+  valsetConfirm,
+  valsetUpdateClaim,
+  withdrawClaim,
+} from "injectivejs/injective/peggy/v1/msgs.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Cosmos Staking Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for Cosmos staking messages and destructures common message types.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_24
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/cosmos/staking/v1beta1/tx.registry";
+
+const {
+  beginRedelegate,
+  createValidator,
+  delegate,
+  editValidator,
+  undelegate,
+} = MessageComposer.fromPartial;
+```
+
+----------------------------------------
+
+TITLE: Importing CosmWasm Message Composers (JS)
+DESCRIPTION: Demonstrates how to import message composer functions for interacting with CosmWasm contracts (like `executeContract`, `instantiateContract`) using the `cosmwasm.wasm.v1.MessageComposer.withTypeUrl` from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_9
+
+LANGUAGE: js
+CODE:
+```
+import { cosmwasm } from "injective-vue";
+
+const {
+  clearAdmin,
+  executeContract,
+  instantiateContract,
+  migrateContract,
+  storeCode,
+  updateAdmin,
+} = cosmwasm.wasm.v1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing All Exchange Message Composers (JS)
+DESCRIPTION: Provides a comprehensive list of message composer functions available for the Injective exchange module, imported using `injective.exchange.v1beta1.MessageComposer.withTypeUrl` from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_4
+
+LANGUAGE: js
+CODE:
+```
+const {
+  adminUpdateBinaryOptionsMarket,
+  batchCancelBinaryOptionsOrders,
+  batchCancelDerivativeOrders,
+  batchCancelSpotOrders,
+  batchCreateDerivativeLimitOrders,
+  batchCreateSpotLimitOrders,
+  batchUpdateOrders,
+  cancelBinaryOptionsOrder,
+  cancelDerivativeOrder,
+  cancelSpotOrder,
+  createBinaryOptionsLimitOrder,
+  createBinaryOptionsMarketOrder,
+  createDerivativeLimitOrder,
+  createDerivativeMarketOrder,
+  createSpotLimitOrder,
+  createSpotMarketOrder,
+  deposit,
+  exec,
+  externalTransfer,
+  increasePositionMargin,
+  instantBinaryOptionsMarketLaunch,
+  instantExpiryFuturesMarketLaunch,
+  instantPerpetualMarketLaunch,
+  instantSpotMarketLaunch,
+  liquidatePosition,
+  rewardsOptOut,
+  subaccountTransfer,
+  withdraw,
+} = injective.exchange.v1beta1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Composing Oracle Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective Oracle module and destructures message creation functions using `withTypeUrl`. These are used for building oracle-related transaction messages, such as relaying price data.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_17
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/oracle/v1beta1/tx.registry";
+
+const {
+  relayBandRates,
+  relayCoinbaseMessages,
+  relayPriceFeedPrice,
+  relayProviderPrices,
+  requestBandIBCRates,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing OCR Message Composers (JS)
+DESCRIPTION: Demonstrates how to import various message composer functions for the Injective OCR (Off-chain Reporting) module from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_6
+
+LANGUAGE: js
+CODE:
+```
+const {
+  acceptPayeeship,
+  createFeed,
+  fundFeedRewardPool,
+  setPayees,
+  transferPayeeship,
+  transmit,
+  updateFeed,
+  withdrawFeedRewardPool,
+} = injective.ocr.v1beta1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Insurance Message Composers (JS)
+DESCRIPTION: Shows how to import message composer functions for the Injective insurance module, including `createInsuranceFund`, `requestRedemption`, and `underwrite`, from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_5
+
+LANGUAGE: js
+CODE:
+```
+const { createInsuranceFund, requestRedemption, underwrite } =
+  injective.insurance.v1beta1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Oracle Message Composers (JS)
+DESCRIPTION: Shows how to import message composer functions related to oracle operations within the Injective oracle module using `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_7
+
+LANGUAGE: js
+CODE:
+```
+const {
+  relayBandRates,
+  relayCoinbaseMessages,
+  relayPriceFeedPrice,
+  relayProviderPrices,
+  requestBandIBCRates,
+} = injective.oracle.v1beta1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Insurance Message Composer Functions (JavaScript)
+DESCRIPTION: Imports the `MessageComposer` for the Injective Insurance module from `injectivejs` and extracts message creation functions using `withTypeUrl` for composing insurance-related transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_16
+
+LANGUAGE: javascript
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/insurance/v1beta1/tx.registry";
+
+const { createInsuranceFund, requestRedemption, underwrite } =
+  MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Insurance RPC Functions (JavaScript)
+DESCRIPTION: Imports RPC functions from the `injectivejs` library for interacting with the Injective Insurance module, enabling actions like creating insurance funds, requesting redemptions, and underwriting.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_6
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  createInsuranceFund,
+  requestRedemption,
+  underwrite,
+} from "injectivejs/injective/insurance/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing CosmWasm RPC Functions (JavaScript)
+DESCRIPTION: Imports RPC functions from the `injectivejs` library for interacting with the Cosmos SDK CosmWasm module, enabling smart contract deployment and execution.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_10
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  executeContract,
+  clearAdmin,
+  instantiateContract,
+  instantiateContract2,
+  migrateContract,
+  pinCodes,
+  removeCodeUploadParamsAddresses,
+  storeAndInstantiateContract,
+  storeCode,
+  sudoContract,
+  unpinCodes,
+  updateAdmin,
+  updateContractLabel,
+  updateInstantiateConfig,
+  addCodeUploadParamsAddresses,
+  storeAndMigrateContract,
+} from "injectivejs/cosmwasm/wasm/v1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Composing Peggy Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective Peggy module and destructures message creation functions using `withTypeUrl`. These are used for building transaction messages related to the Ethereum bridge.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_18
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/peggy/v1/tx.registry";
+
+const {
+  cancelSendToEth,
+  confirmBatch,
+  depositClaim,
+  eRC20DeployedClaim,
+  requestBatch,
+  sendToEth,
+  setOrchestratorAddresses,
+  submitBadSignatureEvidence,
+  valsetConfirm,
+  valsetUpdateClaim,
+  withdrawClaim,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Auction Message Composer Functions (JavaScript)
+DESCRIPTION: Imports the `MessageComposer` for the Injective Auction module from `injectivejs` and extracts the `bid` message creation function using `withTypeUrl` for composing auction bid transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_14
+
+LANGUAGE: javascript
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/auction/v1beta1/tx.registry";
+
+const { bid } = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Auction Transaction Helper Function
+DESCRIPTION: Shows how to import the `bid` transaction helper function specifically for the Injective auction module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_4
+
+LANGUAGE: js
+CODE:
+```
+import { bid } from "injectivejs/injective/auction/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Exchange RPC Functions (JavaScript)
+DESCRIPTION: Imports various RPC functions from the `injectivejs` library for interacting with the Injective Exchange module, covering operations like trading, deposits, withdrawals, and market management.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_5
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  activateStakeGrant,
+  adminUpdateBinaryOptionsMarket,
+  authorizeStakeGrants,
+  batchCancelBinaryOptionsOrders,
+  batchCancelDerivativeOrders,
+  batchCancelSpotOrders,
+  batchCreateDerivativeLimitOrders,
+  batchCreateSpotLimitOrders,
+  batchUpdateOrders,
+  cancelBinaryOptionsOrder,
+  cancelDerivativeOrder,
+  cancelSpotOrder,
+  createBinaryOptionsLimitOrder,
+  createBinaryOptionsMarketOrder,
+  createDerivativeLimitOrder,
+  createDerivativeMarketOrder,
+  createSpotLimitOrder,
+  createSpotMarketOrder,
+  decreasePositionMargin,
+  deposit,
+  emergencySettleMarket,
+  externalTransfer,
+  increasePositionMargin,
+  instantBinaryOptionsMarketLaunch,
+  instantExpiryFuturesMarketLaunch,
+  instantPerpetualMarketLaunch,
+  instantSpotMarketLaunch,
+  liquidatePosition,
+  privilegedExecuteContract,
+  rewardsOptOut,
+  subaccountTransfer,
+  updateDerivativeMarket,
+  updateParams,
+  updateSpotMarket,
+  withdraw,
+} from "injectivejs/injective/exchange/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Auction Message Composer (JS)
+DESCRIPTION: Demonstrates how to import the `bid` message composer function specifically for the Injective auction module from `injective-vue`.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-vue/README.md#_snippet_3
+
+LANGUAGE: js
+CODE:
+```
+const { bid } = injective.auction.v1beta1.MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Composing Insurance Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective Insurance module and destructures message creation functions (`createInsuranceFund`, `requestRedemption`, `underwrite`) using `withTypeUrl`. These are used for building insurance-related transaction messages.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_15
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/insurance/v1beta1/tx.registry";
+
+const { createInsuranceFund, requestRedemption, underwrite } =
+  MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Exchange Transaction Helper Functions
+DESCRIPTION: Shows how to import specific transaction helper functions like `deposit`, `liquidatePosition`, and `activateStakeGrant` from the Injective exchange module.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_3
+
+LANGUAGE: js
+CODE:
+```
+import {
+  deposit,
+  liquidatePosition,
+  activateStakeGrant,
+} from "injectivejs/injective/exchange/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Composing OCR Messages (injectivejs) - JS
+DESCRIPTION: Imports the `MessageComposer` for the Injective OCR module and destructures message creation functions using `withTypeUrl`. These are used for building transaction messages related to Off-chain Reporting (OCR).
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_16
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/ocr/v1beta1/tx.registry";
+
+const {
+  acceptPayeeship,
+  createFeed,
+  fundFeedRewardPool,
+  setPayees,
+  transferPayeeship,
+  transmit,
+  updateFeed,
+  withdrawFeedRewardPool,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing Insurance Transaction Helper Functions
+DESCRIPTION: This snippet shows the import for transaction helper functions related to the Injective Insurance module. These functions are used for operations like creating insurance funds, requesting redemptions, and underwriting.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_5
+
+LANGUAGE: JavaScript
+CODE:
+```
+import {
+  createInsuranceFund,
+  requestRedemption,
+  underwrite,
+} from "injectivejs/injective/insurance/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing Oracle Message Composers (JS)
+DESCRIPTION: Imports the MessageComposer for Injective Oracle messages and destructures common message types for easy access.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_18
+
+LANGUAGE: js
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/oracle/v1beta1/tx.registry";
+
+const {
+  relayBandRates,
+  relayCoinbaseMessages,
+  relayPriceFeedPrice,
+  relayProviderPrices,
+  requestBandIBCRates,
+} = MessageComposer.withTypeUrl;
+```
+
+----------------------------------------
+
+TITLE: Importing OCR Transaction Helper Functions
+DESCRIPTION: This snippet shows the import for transaction helper functions related to the Injective OCR (Off-chain Reporting) module. These functions facilitate operations like creating feeds, funding reward pools, setting payees, and transmitting data.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injectivejs/README.md#_snippet_6
+
+LANGUAGE: JavaScript
+CODE:
+```
+import {
+  acceptPayeeship,
+  createFeed,
+  fundFeedRewardPool,
+  setPayees,
+  transferPayeeship,
+  transmit,
+  updateFeed,
+  withdrawFeedRewardPool,
+} from "injectivejs/injective/ocr/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Querying Injective RPC Endpoints with React Hooks
+DESCRIPTION: Demonstrates how to use `useChain` to get the RPC endpoint for Injective and then query Cosmos and Injective-specific modules using the provided RPC functions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+import { getAllBalances } from "injectivejs/cosmos/bank/v1beta1/query.rpc.func";
+import { getExchangeBalances } from "injectivejs/injective/exchange/v1beta1/query.rpc.func";
+
+{ getRpcEndpoint } = useChain("injective");
+
+const endpoint = await getRpcEndpoint();
+
+// now you can query the cosmos modules
+const balance = await getAllBalances(endpoint, {
+  address: "inj1addresshere",
+});
+
+// you can also query the injective modules
+const exchangeBalance = await getExchangeBalances(endpoint, {});
+```
+
+----------------------------------------
+
+TITLE: Importing OCR RPC Functions (JavaScript)
+DESCRIPTION: Imports RPC functions from the `injectivejs` library for interacting with the Injective OCR (Off-chain Reporting) module, used for managing data feeds and rewards.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_7
+
+LANGUAGE: javascript
+CODE:
+```
+import {
+  acceptPayeeship,
+  createFeed,
+  fundFeedRewardPool,
+  setPayees,
+  transferPayeeship,
+  transmit,
+  updateFeed,
+  withdrawFeedRewardPool,
+} from "injectivejs/injective/ocr/v1beta1/tx.rpc.func";
+```
+
+----------------------------------------
+
+TITLE: Importing OCR Message Composer Functions (JavaScript)
+DESCRIPTION: Imports the `MessageComposer` for the Injective OCR module from `injectivejs` and extracts message creation functions using `withTypeUrl` for composing OCR-related transactions.
+SOURCE: https://github.com/hyperweb-io/interchainjs/blob/main/libs/injective-react/README.md#_snippet_17
+
+LANGUAGE: javascript
+CODE:
+```
+import { MessageComposer } from "injectivejs/injective/ocr/v1beta1/tx.registry";
+
+const {
+  acceptPayeeship,
+  createFeed,
+  fundFeedRewardPool,
+  setPayees,
+  transferPayeeship,
+  transmit,
+  updateFeed,
+  withdrawFeedRewardPool,
+} = MessageComposer.withTypeUrl;
+```
