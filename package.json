@@ -1,6 +1,6 @@
 {
   "name": "@hyperweb/mcp-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Model Context Protocol Hyperweb products",
   "main": "build/index.js",
   "scripts": {
