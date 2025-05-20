@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const BASE_URL = 'https://raw.githubusercontent.com/hyperweb-io/starship/main/docs/config';
-const OUTPUT_DIR = path.join(__dirname, '..', 'prompts');
-const OUTPUT_FILE = 'starship-config.md';
+const OUTPUT_DIR = path.join(__dirname, '..', 'data');
+const OUTPUT_FILE = 'starship-config-docs.md';
 const DELIMITER = '\n\n----------------------------------------\n\n';
 
 // Define files to fetch in desired order (index.mdx first)
@@ -30,7 +30,7 @@ async function fetchAndSaveDocs() {
     // Ensure output directory exists
     await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-    console.log('Fetching documentation files...');
+    console.log('Fetching config docs...\n');
 
     // Fetch all files
     const contents = await Promise.all(
@@ -47,9 +47,9 @@ async function fetchAndSaveDocs() {
     const outputPath = path.join(OUTPUT_DIR, OUTPUT_FILE);
     await fs.writeFile(outputPath, combinedContent, 'utf-8');
 
-    console.log(`Successfully saved combined documentation to ${outputPath}`);
+    console.log(`\nSaved combined config docs to ${outputPath}`);
   } catch (error) {
-    console.error('Error processing documentation:', error);
+    console.error('Error processing config docs:', error);
     process.exit(1);
   }
 }
