@@ -65,57 +65,16 @@ Tools for interacting with Starship, the unified development and testing environ
 
 ### `generateStarshipConfig`
 
-- **Description**: Generates a Starship configuration file in YAML format based on detailed input options then creates the file (e.g., `starship/config.yaml`) in the workspace.
+- **Description**: This tool helps generate Starship configuration files by providing comprehensive documentation and type definitions.
 - **Source**: `src/starship/tools/starship-config-gen.ts`
-- **Parameters (StarshipConfigInput)**:
-  - `configFilePath` (string, required): The absolute path to the Starship configuration file (e.g., `&lt;current_working_directory&gt;/starship/config.yaml`).
-  - `configName` (string, optional, default: "starship"): Top-level configuration name.
-  - `configVersion` (string, optional, default: "1.6.0"): Top-level configuration version.
-  - `chains` (array of ChainConfig, required, min: 1): List of chain configurations. Each `ChainConfig` includes:
-    - `id` (string, required): Unique identifier for the chain.
-    - `name` (string, required): Type of chain (e.g., 'osmosis', 'custom').
-    - `numValidators` (integer, required, positive): Number of validators.
-    - `image` (string, optional): Override default Docker image.
-    - `home` (string, optional): Home directory path (for `name: 'custom'`).
-    - `binary` (string, optional): Binary name (for `name: 'custom'`).
-    - `prefix` (string, optional): Address prefix (for `name: 'custom'`).
-    - `denom` (string, optional): Primary denomination (for `name: 'custom'`).
-    - `coins` (string, optional): Genesis coins.
-    - `hdPath` (string, optional): HD path.
-    - `coinType` (integer, optional): Coin type.
-    - `repo` (string URL, optional): Git repository URL.
-    - `ports` (object, optional): Port forwarding (`rest`, `rpc`, `grpc`, `faucet`, `exposer`).
-    - `resources` (object, optional): CPU/memory allocation (`cpu`, `memory`).
-    - `faucet` (object, optional): Faucet config (`enabled`, `type`, `image`, `concurrency`, `resources`).
-    - `build` (object, optional): On-the-fly build config (`enabled`, `source`).
-    - `upgrade` (object, optional): Upgrade prep config (`enabled`, `type`, `genesis`, `upgrades` array).
-    - `genesis` (object, optional): `genesis.json` patches (`app_state`).
-    - `scripts` (object, optional): Override setup scripts.
-    - `cometmock` (object, optional): CometMock config (`enabled`, `image`).
-    - `env` (array of EnvVar, optional): Custom environment variables (`name`, `value`).
-    - `ics` (object, optional): ICS config for consumer chains (`enabled`, `provider`).
-    - `balances` (array of BalanceEntry, optional): Initial balances (`address`, `amount`).
-    - `readinessProbe` (object, optional): Custom readiness probe.
-    - `config` (object, optional): Ethereum-specific config (if `name` is 'ethereum').
-  - `relayers` (array of RelayerConfig, optional): List of relayer configurations. Each `RelayerConfig` includes:
-    - `name` (string, required): Name for the relayer instance.
-    - `type` (enum: `hermes` | `ts-relayer` | `go-relayer` | `neutron-query-relayer`, required): Type of relayer.
-    - `image` (string, optional): Override default Docker image.
-    - `replicas` (integer, optional, default: 1): Number of replicas (currently 1).
-    - `chains` (array of string, required, min: 2): Chain IDs to connect.
-    - `config` (object, optional): Hermes specific `config.toml` overrides.
-    - `ports` (object, optional): Hermes specific port forwarding (`rest`, `exposer`).
-    - `ics` (object, optional): Hermes specific ICS setup.
-  - `explorer` (ExplorerConfig, optional): Explorer configuration (`enabled`, `type`, `ports`, `resources`, `image`).
-  - `registry` (RegistryConfig, optional): Registry service configuration (`enabled`, `localhost`, `ports`, `resources`, `image`).
-- **Output**: Text confirmation with the generated YAML content and writes the file to the specified `configFilePath`.
+- **Parameters**: None.
+- **Output**: Provides text content containing a comprehensive guide for generating a Starship configuration file.
 
 ### `verifyStarshipConfig`
 
 - **Description**: Parses and validates a Starship configuration YAML string against the known schema.
-- **Source**: `src/starship/tools/starship-config-gen.ts`
-- **Parameters (VerifyStarshipConfigInput)**:
-  - `configFilePath` (string, required): The absolute path to the Starship configuration file.
+- **Source**: `src/starship/tools/starship-config-verify.ts`
+- **Parameters**:
   - `yamlContent` (string, required): The Starship configuration content in YAML format as a string.
 - **Output**: Text indicating if the configuration is valid or invalid, with error details if invalid.
 

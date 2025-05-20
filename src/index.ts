@@ -13,6 +13,7 @@ import { registerStarshipSetupTool } from './starship/tools/starship-setup.js';
 import { registerUseChainRegistryTool } from './chain-registry/tools/use-chain-registry.js';
 import { registerUseInterchainKitTool } from './interchain-kit/tools/use-interchain-kit.js';
 import { registerMigrateFromCosmosKitToInterchainKitTool } from './interchain-kit/tools/migrate-from-cosmos-kit-to-interchain-kit.js';
+import { registerStarshipConfigVerifyTool } from './starship/tools/starship-config-verify.js';
 
 // Get package.json version
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,7 @@ async function main() {
   // Starship
   registerStarshipSetupTool(server);
   registerStarshipConfigGenTool(server);
+  registerStarshipConfigVerifyTool(server);
 
   // InterchainJS
   registerMigrateToInterchainjsTool(server);
