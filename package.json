@@ -17,8 +17,8 @@
     "lint": "biome check"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "developers@hyperweb.io",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "@hyperweb/mcp-server": "./build/index.js"
