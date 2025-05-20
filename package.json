@@ -4,8 +4,8 @@
   "description": "Model Context Protocol Hyperweb products",
   "main": "build/index.js",
   "scripts": {
-    "build": "tsc && npm run copy-prompts && chmod 755 build/index.js",
-    "copy-prompts": "./scripts/copy-prompts.sh",
+    "build": "rm -rf build && tsc && npm run copy-assets && chmod 755 build/index.js",
+    "copy-assets": "./scripts/copy-assets.sh",
     "categorize-snippets": "tsx src/interchainjs/scripts/categorize-snippets.ts",
     "fetch-config-docs": "tsx src/starship/scripts/fetch-config-docs.ts",
     "clean": "rimraf build",
