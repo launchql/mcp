@@ -25,7 +25,7 @@ const VERSION = packageJson.version;
 async function main() {
   // ==== Create server instance ====
   const server = new McpServer({
-    name: 'Hyperweb Agentic Tools',
+    name: 'LaunchQL Agentic Tools',
     version: VERSION,
   });
 
@@ -49,7 +49,7 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.log('Hyperweb Agentic Tools MCP server started on stdio');
+  console.log('LaunchQL Agentic Tools MCP server started on stdio');
 }
 
 main().catch((error) => {

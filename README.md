@@ -1,13 +1,13 @@
-# @hyperweb/mcp-server
+# @launchql/mcp-server
 
-This project implements a Model Context Protocol (MCP) server that helps you use Hyperweb platform tools better and easier with AI agents.
+This project implements a Model Context Protocol (MCP) server that helps you use LaunchQL platform tools better and easier with AI agents.
 
 ## Setup
 
-To run the Hyperweb MCP server using npx, use the following command:
+To run the LaunchQL MCP server using npx, use the following command:
 
 ```bash
-npx -y @hyperweb/mcp-server@latest
+npx -y @launchql/mcp-server@latest
 ```
 
 ## Usage with Cursor or Claude Desktop
@@ -17,9 +17,9 @@ Add the following configuration. For more information, read the [Cursor MCP docu
 ```json
 {
   "mcpServers": {
-    "hyperweb-mcp-server": {
+    "launchql-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@hyperweb/mcp-server@latest"]
+      "args": ["-y", "@launchql/mcp-server@latest"]
     }
   }
 }
@@ -30,9 +30,9 @@ On Windows, you might need to use this alternative configuration:
 ```json
 {
   "mcpServers": {
-    "hyperweb-mcp-server": {
+    "launchql-mcp-server": {
       "command": "cmd",
-      "args": ["/k", "npx", "-y", "@hyperweb/mcp-server@latest"]
+      "args": ["/k", "npx", "-y", "@launchql/mcp-server@latest"]
     }
   }
 }
@@ -76,26 +76,6 @@ agentic-tools/
 ├── .env.example   # Example environment variables
 └── biome.json     # Biome configuration
 ```
-
-## Interchain JavaScript Stack ⚛️
-
-A unified toolkit for building applications and smart contracts in the Interchain ecosystem
-
-| Category              | Tools                                                                                                                  | Description                                                                                           |
-|----------------------|------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| **Chain Information**   | [**Chain Registry**](https://github.com/hyperweb-io/chain-registry), [**Utils**](https://www.npmjs.com/package/@chain-registry/utils), [**Client**](https://www.npmjs.com/package/@chain-registry/client) | Everything from token symbols, logos, and IBC denominations for all assets you want to support in your application. |
-| **Wallet Connectors**| [**Interchain Kit**](https://github.com/hyperweb-io/interchain-kit)<sup>beta</sup>, [**Cosmos Kit**](https://github.com/hyperweb-io/cosmos-kit) | Experience the convenience of connecting with a variety of web3 wallets through a single, streamlined interface. |
-| **Signing Clients**          | [**InterchainJS**](https://github.com/hyperweb-io/interchainjs)<sup>beta</sup>, [**CosmJS**](https://github.com/cosmos/cosmjs) | A single, universal signing interface for any network |
-| **SDK Clients**              | [**Telescope**](https://github.com/hyperweb-io/telescope)                                                          | Your Frontend Companion for Building with TypeScript with Cosmos SDK Modules. |
-| **Starter Kits**     | [**Create Interchain App**](https://github.com/hyperweb-io/create-interchain-app)<sup>beta</sup>, [**Create Cosmos App**](https://github.com/hyperweb-io/create-cosmos-app) | Set up a modern Interchain app by running one command. |
-| **UI Kits**          | [**Interchain UI**](https://github.com/hyperweb-io/interchain-ui)                                                   | The Interchain Design System, empowering developers with a flexible, easy-to-use UI kit. |
-| **Testing Frameworks**          | [**Starship**](https://github.com/hyperweb-io/starship)                                                             | Unified Testing and Development for the Interchain. |
-| **TypeScript Smart Contracts** | [**Create Hyperweb App**](https://github.com/hyperweb-io/create-hyperweb-app)                              | Build and deploy full-stack blockchain applications with TypeScript |
-| **CosmWasm Contracts** | [**CosmWasm TS Codegen**](https://github.com/CosmWasm/ts-codegen)                                                   | Convert your CosmWasm smart contracts into dev-friendly TypeScript classes. |
-
-## Credits
-
-🛠 Built by Hyperweb (formerly Cosmology) — if you like our tools, please checkout and contribute to [our github ⚛️](https://github.com/hyperweb-io)
 
 ## Disclaimer
 
