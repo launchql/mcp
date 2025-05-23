@@ -18,6 +18,7 @@
   },
   "keywords": [],
   "author": "developers@hyperweb.io",
+  "homepage": "https://github.com/hyperweb-io/mcp",
   "license": "MIT",
   "type": "module",
   "bin": {
