@@ -6,13 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { registerMigrateToInterchainjsTool } from './interchainjs/tools/migrate-to-interchainjs.js';
-import { registerUseInterchainjsTool } from './interchainjs/tools/use-interchainjs.js';
 import { registerStarshipConfigGenTool } from './starship/tools/starship-config-gen.js';
 import { registerStarshipSetupTool } from './starship/tools/starship-setup.js';
-import { registerUseChainRegistryTool } from './chain-registry/tools/use-chain-registry.js';
-import { registerUseInterchainKitTool } from './interchain-kit/tools/use-interchain-kit.js';
-import { registerMigrateFromCosmosKitToInterchainKitTool } from './interchain-kit/tools/migrate-from-cosmos-kit-to-interchain-kit.js';
 import { registerStarshipConfigVerifyTool } from './starship/tools/starship-config-verify.js';
 import { registerPgsqlTestTool } from './pgsql-test/tools/pgsql-test.js';
 import { registerGraphileTestTool } from './graphile-test/tools/graphile-test.js';
@@ -35,19 +30,6 @@ async function main() {
   registerStarshipSetupTool(server);
   registerStarshipConfigGenTool(server);
   registerStarshipConfigVerifyTool(server);
-
-  // InterchainJS
-  registerMigrateToInterchainjsTool(server);
-  registerUseInterchainjsTool(server);
-
-  // Chain Registry
-  registerUseChainRegistryTool(server);
-
-  // Interchain Kit
-  registerUseInterchainKitTool(server);
-
-  // Cosmos Kit to Interchain Kit Migration
-  registerMigrateFromCosmosKitToInterchainKitTool(server);
 
   // LaunchQL Testing Tools
   registerPgsqlTestTool(server);
