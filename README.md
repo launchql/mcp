@@ -53,9 +53,6 @@ The server provides the following tools:
 
 | Tool Name | Description |
 |-----------|-------------|
-| generateStarshipConfig | Generate Starship configuration |
-| verifyStarshipConfig | Verify a Starship configuration |
-| setupStarship | Setup Starship environment |
 | pgsqlTest | Create isolated PostgreSQL testing environments with transaction rollbacks, context switching, and seeding |
 | graphileTest | GraphQL testing with PostGraphile that builds on top of pgsql-test to provide robust GraphQL testing utilities |
 
@@ -71,9 +68,6 @@ The server provides the following tools:
 ```md
 agentic-tools/
 ├── src/           # Source code
-│   ├── starship/  # Starship-related tools and prompts
-│   │   ├── tools/ # Tool implementations
-│   │   └── prompts/ # Prompt templates
 │   ├── pgsql-test/  # PostgreSQL testing tools and prompts
 │   │   ├── tools/ # Tool implementations
 │   │   └── prompts/ # Prompt templates
