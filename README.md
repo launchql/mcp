@@ -56,6 +56,8 @@ The server provides the following tools:
 | generateStarshipConfig | Generate Starship configuration |
 | verifyStarshipConfig | Verify a Starship configuration |
 | setupStarship | Setup Starship environment |
+| pgsqlTest | Create isolated PostgreSQL testing environments with transaction rollbacks, context switching, and seeding |
+| graphileTest | GraphQL testing with PostGraphile that builds on top of pgsql-test to provide robust GraphQL testing utilities |
 
 ### Development Tools
 
@@ -69,7 +71,13 @@ The server provides the following tools:
 ```md
 agentic-tools/
 ├── src/           # Source code
-│   └── starship/  # Starship-related tools and prompts
+│   ├── starship/  # Starship-related tools and prompts
+│   │   ├── tools/ # Tool implementations
+│   │   └── prompts/ # Prompt templates
+│   ├── pgsql-test/  # PostgreSQL testing tools and prompts
+│   │   ├── tools/ # Tool implementations
+│   │   └── prompts/ # Prompt templates
+│   └── graphile-test/  # GraphQL testing tools and prompts
 │       ├── tools/ # Tool implementations
 │       └── prompts/ # Prompt templates
 ├── build/         # Compiled output
@@ -79,6 +87,6 @@ agentic-tools/
 
 ## Disclaimer
 
-AS DESCRIBED IN THE LICENSES, THE SOFTWARE IS PROVIDED “AS IS”, AT YOUR OWN RISK, AND WITHOUT WARRANTIES OF ANY KIND.
+AS DESCRIBED IN THE LICENSES, THE SOFTWARE IS PROVIDED "AS IS", AT YOUR OWN RISK, AND WITHOUT WARRANTIES OF ANY KIND.
 
 No developer or entity involved in creating this software will be liable for any claims or damages whatsoever associated with your use, inability to use, or your interaction with other users of the code, including any direct, indirect, incidental, special, exemplary, punitive or consequential damages, or loss of profits, cryptocurrencies, tokens, or anything else of value.
