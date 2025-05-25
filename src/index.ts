@@ -14,6 +14,8 @@ import { registerUseChainRegistryTool } from './chain-registry/tools/use-chain-r
 import { registerUseInterchainKitTool } from './interchain-kit/tools/use-interchain-kit.js';
 import { registerMigrateFromCosmosKitToInterchainKitTool } from './interchain-kit/tools/migrate-from-cosmos-kit-to-interchain-kit.js';
 import { registerStarshipConfigVerifyTool } from './starship/tools/starship-config-verify.js';
+import { registerPgsqlTestTool } from './pgsql-test/tools/pgsql-test.js';
+import { registerGraphileTestTool } from './graphile-test/tools/graphile-test.js';
 
 // Get package.json version
 const __filename = fileURLToPath(import.meta.url);
@@ -46,6 +48,10 @@ async function main() {
 
   // Cosmos Kit to Interchain Kit Migration
   registerMigrateFromCosmosKitToInterchainKitTool(server);
+
+  // LaunchQL Testing Tools
+  registerPgsqlTestTool(server);
+  registerGraphileTestTool(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
