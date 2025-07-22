@@ -2,7 +2,7 @@
 
 This project implements a Model Context Protocol (MCP) server that helps you use LaunchQL platform tools better and easier with AI agents.
 
-> 🛠️ Looking to **generate an MCP server from your blockchain**?  
+> 🛠️ This is for the [Hyperweb MCP Server](https://github.com/launchql/mcp). Looking to **generate an MCP server from your blockchain**?  
 > Use [Telescope's MCP integration guide](https://docs.hyperweb.io/telescope/Developing/mcp-integration) to get started.
 
 ## Setup
